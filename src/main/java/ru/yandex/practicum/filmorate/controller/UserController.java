@@ -39,7 +39,7 @@ public class UserController {
     public User updateUser(@RequestBody User user) {
         validateUser(user);
         if (!allUsers.containsKey(user.getId()))
-            user.setId(++userIdSequence);
+            throw new ValidationException("Пользователь не найден!");
         allUsers.put(user.getId(), user);
         String userUpdatedMessage = "Пользователь %d успешно изменён.";
         log.info(userUpdatedMessage, user.getId());

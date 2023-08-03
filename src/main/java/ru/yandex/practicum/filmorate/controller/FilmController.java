@@ -41,7 +41,7 @@ public class FilmController {
     public Film updateFilm(@RequestBody Film film) {
         validateFilm(film);
         if (!allFilms.containsKey(film.getId()))
-            film.setId(++filmIdSequence);
+            throw new ValidationException("Фильм не найден!");
         allFilms.put(film.getId(), film);
         String filmUpdatedMessage = "Фильм %d успешно изменён.";
         log.info(filmUpdatedMessage, film.getId());
