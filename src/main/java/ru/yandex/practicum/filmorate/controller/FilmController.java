@@ -50,27 +50,27 @@ public class FilmController {
 
     public void validateFilm(Film film) {
         if (film.getName() == null || film.getName().isBlank()) {
-            String EMPTY_NAME_MESSAGE = "Название не должно быть пустым!";
-            log.error(EMPTY_NAME_MESSAGE);
-            throw new ValidationException(EMPTY_NAME_MESSAGE);
+            String emptyNameMessage = "Название не должно быть пустым!";
+            log.error(emptyNameMessage);
+            throw new ValidationException(emptyNameMessage);
         }
-        int MAX_DESCRIPTION_LENGTH = 200;
-        if (film.getDescription().length() > MAX_DESCRIPTION_LENGTH) {
-            String TOO_LONG_DESCRIPTION_MESSAGE = "Описание не должно быть длиннее %d символов!";
-            String errorMessage = String.format(TOO_LONG_DESCRIPTION_MESSAGE, MAX_DESCRIPTION_LENGTH);
+        int maxDescriptionLength = 200;
+        if (film.getDescription().length() > maxDescriptionLength) {
+            String tooLongDescriptionMessage = "Описание не должно быть длиннее %d символов!";
+            String errorMessage = String.format(tooLongDescriptionMessage, maxDescriptionLength);
             log.error(errorMessage);
             throw new ValidationException(errorMessage);
         }
         if (film.getReleaseDate().isBefore(MIN_RELEASE_DATE)) {
-            String TOO_OLD_MESSAGE = "Дата релиза не может быть ранее %s!";
-            String errorMessage = String.format(TOO_OLD_MESSAGE, MIN_RELEASE_DATE.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
+            String tooOldMessage = "Дата релиза не может быть ранее %s!";
+            String errorMessage = String.format(tooOldMessage, MIN_RELEASE_DATE.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
             log.error(errorMessage);
             throw new ValidationException(errorMessage);
         }
         if (film.getDuration() <= 0) {
-            String NEGATIVE_DURATION_MESSAGE = "Продолжительность фильма должна быть положительной!";
-            log.error(NEGATIVE_DURATION_MESSAGE);
-            throw new ValidationException(NEGATIVE_DURATION_MESSAGE);
+            String negativeDurationMessage = "Продолжительность фильма должна быть положительной!";
+            log.error(negativeDurationMessage);
+            throw new ValidationException(negativeDurationMessage);
         }
     }
 }

@@ -25,10 +25,10 @@ class FilmControllerTests {
         assertThrows(ValidationException.class, () -> filmController.validateFilm(film3));
         final Film film4 = new Film(0, "name", "description", LocalDate.of(2000, 1, 1), 0);
         assertThrows(ValidationException.class, () -> filmController.validateFilm(film4));
-        String STRANGE_NAME = "  1  ";
-        film1.setName(STRANGE_NAME);
+        String strangeName = "  1  ";
+        film1.setName(strangeName);
         filmController.validateFilm(film1);
-        assertEquals(film1.getName(), STRANGE_NAME);
+        assertEquals(film1.getName(), strangeName);
         film2.setDescription(DESCRIPTION_200);
         filmController.validateFilm(film2);
         assertEquals(film2.getDescription().length(), 200);

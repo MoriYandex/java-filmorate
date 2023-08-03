@@ -20,8 +20,8 @@ public class UserController {
 
     @GetMapping()
     public List<User> getAllUsers() {
-        String USERS_LIST_GOT_MESSAGE = "Получен список всех пользователей.";
-        log.info(USERS_LIST_GOT_MESSAGE);
+        String usersListGotMessage = "Получен список всех пользователей.";
+        log.info(usersListGotMessage);
         return new ArrayList<>(allUsers.values());
     }
 
@@ -30,8 +30,8 @@ public class UserController {
         validateUser(user);
         user.setId(++userIdSequence);
         allUsers.put(user.getId(), user);
-        String USER_ADDED_MESSAGE = "Пользователь %d успешно добавлен.";
-        log.info(USER_ADDED_MESSAGE, user.getId());
+        String userAddedMessage = "Пользователь %d успешно добавлен.";
+        log.info(userAddedMessage, user.getId());
         return user;
     }
 
@@ -41,26 +41,26 @@ public class UserController {
         if (!allUsers.containsKey(user.getId()))
             user.setId(++userIdSequence);
         allUsers.put(user.getId(), user);
-        String USER_UPDATED_MESSAGE = "Пользователь %d успешно изменён.";
-        log.info(USER_UPDATED_MESSAGE, user.getId());
+        String userUpdatedMessage = "Пользователь %d успешно изменён.";
+        log.info(userUpdatedMessage, user.getId());
         return user;
     }
 
     public void validateUser(User user) {
         if (user.getEmail() == null || user.getEmail().isBlank()) {
-            String EMPTY_EMAIL_MESSAGE = "Электронная почта не должна быть пустой!";
-            log.error(EMPTY_EMAIL_MESSAGE);
-            throw new ValidationException(EMPTY_EMAIL_MESSAGE);
+            String emptyEmailMessage = "Электронная почта не должна быть пустой!";
+            log.error(emptyEmailMessage);
+            throw new ValidationException(emptyEmailMessage);
         }
         if (!user.getEmail().contains("@")) {
-            String MISSING_DOG_MESSAGE = "Электронная почта должна содержать символ '@'!";
-            log.error(MISSING_DOG_MESSAGE);
-            throw new ValidationException(MISSING_DOG_MESSAGE);
+            String missingDogMessage = "Электронная почта должна содержать символ '@'!";
+            log.error(missingDogMessage);
+            throw new ValidationException(missingDogMessage);
         }
         if (user.getLogin() == null || user.getLogin().isBlank()) {
-            String EMPTY_LOGIN_MESSAGE = "Логин не должен быть пустым!";
-            log.error(EMPTY_LOGIN_MESSAGE);
-            throw new ValidationException(EMPTY_LOGIN_MESSAGE);
+            String emptyLoginMessage = "Логин не должен быть пустым!";
+            log.error(emptyLoginMessage);
+            throw new ValidationException(emptyLoginMessage);
         }
         if (user.getLogin().contains(" ")) {
             String LOGIN_WITH_WHITESPACE_MESSAGE = "Логин не должен содержать пробелы!";
@@ -68,9 +68,9 @@ public class UserController {
             throw new ValidationException(LOGIN_WITH_WHITESPACE_MESSAGE);
         }
         if (user.getBirthday().isAfter(LocalDate.now())) {
-            String FUTURE_BIRTHDATE_MESSAGE = "Дата рождения не может быть в будущем!";
-            log.error(FUTURE_BIRTHDATE_MESSAGE);
-            throw new ValidationException(FUTURE_BIRTHDATE_MESSAGE);
+            String futureBirthdateMessage = "Дата рождения не может быть в будущем!";
+            log.error(futureBirthdateMessage);
+            throw new ValidationException(futureBirthdateMessage);
         }
         if (user.getName() == null || user.getName().isBlank())
             user.setName(user.getLogin());
