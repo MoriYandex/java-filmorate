@@ -15,15 +15,15 @@ import java.util.TreeMap;
 @RequestMapping("/films")
 @Slf4j
 public class FilmController {
-    private final LocalDate MIN_RELEASE_DATE = LocalDate.of(1895, 12, 28);
+    private static final LocalDate MIN_RELEASE_DATE = LocalDate.of(1895, 12, 28);
 
     private final TreeMap<Integer, Film> allFilms = new TreeMap<>();
     private Integer filmIdSequence = 0;
 
     @GetMapping()
     public List<Film> getAllFilms() {
-        String FILMS_LIST_GOT_MESSAGE = "Получен список всех фильмов.";
-        log.info(FILMS_LIST_GOT_MESSAGE);
+        String filmsListGotMessage = "Получен список всех фильмов.";
+        log.info(filmsListGotMessage);
         return new ArrayList<>(allFilms.values());
     }
 
@@ -32,8 +32,8 @@ public class FilmController {
         validateFilm(film);
         film.setId(++filmIdSequence);
         allFilms.put(film.getId(), film);
-        String FILM_ADDED_MESSAGE = "Фильм %d успешно добавлен.";
-        log.info(String.format(FILM_ADDED_MESSAGE, film.getId()));
+        String filmAddedMessage = "Фильм %d успешно добавлен.";
+        log.info(String.format(filmAddedMessage, film.getId()));
         return film;
     }
 
@@ -43,8 +43,8 @@ public class FilmController {
         if (!allFilms.containsKey(film.getId()))
             film.setId(++filmIdSequence);
         allFilms.put(film.getId(), film);
-        String FILM_UPDATED_MESSAGE = "Фильм %d успешно изменён.";
-        log.info(FILM_UPDATED_MESSAGE, film.getId());
+        String filmUpdatedMessage = "Фильм %d успешно изменён.";
+        log.info(filmUpdatedMessage, film.getId());
         return film;
     }
 

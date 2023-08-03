@@ -10,9 +10,9 @@ import java.time.LocalDate;
 import static org.junit.jupiter.api.Assertions.*;
 
 class FilmControllerTests {
-    private final LocalDate MIN_RELEASE_DATE = LocalDate.of(1985, 12, 28);
-    private final String VERY_LONG_DESCRIPTION = "Очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень длинное описание";
-    private final String DESCRIPTION_200 = VERY_LONG_DESCRIPTION.substring(0, 200);
+    private static final LocalDate MIN_RELEASE_DATE = LocalDate.of(1985, 12, 28);
+    private static final String VERY_LONG_DESCRIPTION = "Очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень длинное описание";
+    private static final String DESCRIPTION_200 = VERY_LONG_DESCRIPTION.substring(0, 200);
     FilmController filmController = new FilmController();
 
     @Test
