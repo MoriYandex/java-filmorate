@@ -63,9 +63,9 @@ public class UserController {
             throw new ValidationException(emptyLoginMessage);
         }
         if (user.getLogin().contains(" ")) {
-            String LOGIN_WITH_WHITESPACE_MESSAGE = "Логин не должен содержать пробелы!";
-            log.error(LOGIN_WITH_WHITESPACE_MESSAGE);
-            throw new ValidationException(LOGIN_WITH_WHITESPACE_MESSAGE);
+            String loginWithWhitespaceMessage = "Логин не должен содержать пробелы!";
+            log.error(loginWithWhitespaceMessage);
+            throw new ValidationException(loginWithWhitespaceMessage);
         }
         if (user.getBirthday().isAfter(LocalDate.now())) {
             String futureBirthdateMessage = "Дата рождения не может быть в будущем!";
