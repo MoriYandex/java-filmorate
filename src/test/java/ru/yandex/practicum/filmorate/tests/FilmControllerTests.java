@@ -18,9 +18,9 @@ class FilmControllerTests {
     @Test
     void validateFilm() {
         final Film film1 = new Film(0, "  ", "description", LocalDate.of(2000, 1, 1), 100);
-        assertThrows(ValidationException.class, ()->filmController.validateFilm(film1));
+        assertThrows(ValidationException.class, () -> filmController.validateFilm(film1));
         final Film film2 = new Film(0, "name", VERY_LONG_DESCRIPTION, LocalDate.of(2000, 1, 1), 100);
-        assertThrows(ValidationException.class, ()->filmController.validateFilm(film2));
+        assertThrows(ValidationException.class, () -> filmController.validateFilm(film2));
         final Film film3 = new Film(0, "name", "description", LocalDate.of(1800, 1, 1), 100);
         assertThrows(ValidationException.class, () -> filmController.validateFilm(film3));
         final Film film4 = new Film(0, "name", "description", LocalDate.of(2000, 1, 1), 0);
