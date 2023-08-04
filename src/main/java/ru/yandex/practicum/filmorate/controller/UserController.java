@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
@@ -20,8 +21,7 @@ public class UserController {
 
     @GetMapping()
     public List<User> getAllUsers() {
-        String usersListGotMessage = "Получен список всех пользователей.";
-        log.info(usersListGotMessage);
+        log.info("Получен список всех пользователей.");
         return new ArrayList<>(allUsers.values());
     }
 
@@ -30,8 +30,7 @@ public class UserController {
         validateUser(user);
         user.setId(++userIdSequence);
         allUsers.put(user.getId(), user);
-        String userAddedMessage = "Пользователь %d успешно добавлен.";
-        log.info(userAddedMessage, user.getId());
+        log.info(String.format("Пользователь %d успешно добавлен.", user.getId()));
         return user;
     }
 
@@ -41,13 +40,12 @@ public class UserController {
         if (!allUsers.containsKey(user.getId()))
             throw new ValidationException("Пользователь не найден!");
         allUsers.put(user.getId(), user);
-        String userUpdatedMessage = "Пользователь %d успешно изменён.";
-        log.info(userUpdatedMessage, user.getId());
+        log.info(String.format("Пользователь %d успешно изменён.", user.getId()));
         return user;
     }
 
     public void validateUser(User user) {
-        if (user.getEmail() == null || user.getEmail().isBlank()) {
+        if (!StringUtils.hasText(user.getEmail())) {
             String emptyEmailMessage = "Электронная почта не должна быть пустой!";
             log.error(emptyEmailMessage);
             throw new ValidationException(emptyEmailMessage);
@@ -57,7 +55,7 @@ public class UserController {
             log.error(missingDogMessage);
             throw new ValidationException(missingDogMessage);
         }
-        if (user.getLogin() == null || user.getLogin().isBlank()) {
+        if (!StringUtils.hasText(user.getLogin())) {
             String emptyLoginMessage = "Логин не должен быть пустым!";
             log.error(emptyLoginMessage);
             throw new ValidationException(emptyLoginMessage);
@@ -67,12 +65,12 @@ public class UserController {
             log.error(loginWithWhitespaceMessage);
             throw new ValidationException(loginWithWhitespaceMessage);
         }
-        if (user.getBirthday().isAfter(LocalDate.now())) {
+        if (user.getBirthday() != null && user.getBirthday().isAfter(LocalDate.now())) {
             String futureBirthdateMessage = "Дата рождения не может быть в будущем!";
             log.error(futureBirthdateMessage);
             throw new ValidationException(futureBirthdateMessage);
         }
-        if (user.getName() == null || user.getName().isBlank())
+        if (!StringUtils.hasText(user.getName()))
             user.setName(user.getLogin());
     }
 }
