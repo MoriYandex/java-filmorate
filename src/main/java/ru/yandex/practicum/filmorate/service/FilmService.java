@@ -13,16 +13,14 @@ import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class FilmService {
     private static final LocalDate MIN_RELEASE_DATE = LocalDate.of(1895, 12, 28);
-    private final static int MOST_POPULAR_QUANTITY = 10;
+    private static final int MOST_POPULAR_QUANTITY = 10;
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
 
