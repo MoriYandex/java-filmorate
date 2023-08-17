@@ -18,31 +18,32 @@ import java.util.List;
 public class UserService {
     private final UserStorage userStorage;
 
-    public User getUser(Integer id){
+    public User getUser(Integer id) {
         User user = userStorage.getUser(id);
         if (user == null)
             throw new NotFoundException(String.format("Пользователь %d не найден!", id));
         return user;
     }
-    public List<User> getAllUsers(){
+
+    public List<User> getAllUsers() {
         return userStorage.getAllUsers();
     }
 
-    public User addUser(User user){
+    public User addUser(User user) {
         validateUser(user);
         return userStorage.addUser(user);
     }
 
-    public User updateUser(User user){
+    public User updateUser(User user) {
         validateUser(user);
         return userStorage.updateUser(user);
     }
 
-    public User addFriend(Integer id, Integer friendId){
+    public User addFriend(Integer id, Integer friendId) {
         return userStorage.addFriend(id, friendId);
     }
 
-    public User deleteFriend(Integer id, Integer friendId){
+    public User deleteFriend(Integer id, Integer friendId) {
         return userStorage.deleteFriend(id, friendId);
     }
 
@@ -50,7 +51,7 @@ public class UserService {
         return userStorage.getAllFriends(id);
     }
 
-    public List<User> getCommonFriends(Integer id, Integer otherId){
+    public List<User> getCommonFriends(Integer id, Integer otherId) {
         return userStorage.getCommonFriends(id, otherId);
     }
 

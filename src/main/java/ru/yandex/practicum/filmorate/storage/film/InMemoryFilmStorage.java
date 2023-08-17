@@ -15,7 +15,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     private Integer filmIdSequence = 0;
 
     @Override
-    public Film getFilm(Integer id){
+    public Film getFilm(Integer id) {
         return allFilms.get(id);
     }
 

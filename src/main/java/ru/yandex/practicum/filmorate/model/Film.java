@@ -15,7 +15,8 @@ public class Film {
     private LocalDate releaseDate;
     private Integer duration;
     private final Set<Integer> likes = new TreeSet<>();
-    public int getLikesNumber(){
+
+    public int getLikesNumber() {
         return likes.size();
     }
 }

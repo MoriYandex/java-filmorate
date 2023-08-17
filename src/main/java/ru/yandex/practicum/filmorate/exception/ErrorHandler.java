@@ -9,13 +9,13 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 public class ErrorHandler {
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse validationErrorHandler (final ValidationException e){
+    public ErrorResponse validationErrorHandler(final ValidationException e) {
         return new ErrorResponse("Ошибка валидации", e.getMessage());
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ErrorResponse notFoundErrorHandler (final NotFoundException e){
+    public ErrorResponse notFoundErrorHandler(final NotFoundException e) {
         return new ErrorResponse("Ошибка поиска", e.getMessage());
     }
 }

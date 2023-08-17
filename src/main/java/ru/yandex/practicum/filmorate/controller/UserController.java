@@ -16,7 +16,7 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping("/{id}")
-    public User getUser(@PathVariable Integer id){
+    public User getUser(@PathVariable Integer id) {
         log.info("UserController: поиск пользователя");
         return userService.getUser(id);
     }
@@ -40,25 +40,25 @@ public class UserController {
     }
 
     @PutMapping("/{id}/friends/{friendId}")
-    public User addFriends(@PathVariable Integer id, @PathVariable Integer friendId){
+    public User addFriends(@PathVariable Integer id, @PathVariable Integer friendId) {
         log.info("UserController: добавление в друзья");
         return userService.addFriend(id, friendId);
     }
 
     @DeleteMapping("/{id}/friends/{friendId}")
-    public User deleteFriends(@PathVariable Integer id, @PathVariable Integer friendId){
+    public User deleteFriends(@PathVariable Integer id, @PathVariable Integer friendId) {
         log.info("UserController: удаление из друзей");
         return userService.deleteFriend(id, friendId);
     }
 
     @GetMapping("/{id}/friends")
-    public List<User> getAllFriends(@PathVariable Integer id){
+    public List<User> getAllFriends(@PathVariable Integer id) {
         log.info("UserController: поиск друзей");
         return userService.getAllFriends(id);
     }
 
     @GetMapping("/{id}/friends/common/{otherId}")
-    public List<User> getCommonFriends(@PathVariable Integer id, @PathVariable Integer otherId){
+    public List<User> getCommonFriends(@PathVariable Integer id, @PathVariable Integer otherId) {
         log.info("UserController: поиск общих друзей");
         return userService.getCommonFriends(id, otherId);
     }

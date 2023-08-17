@@ -16,7 +16,7 @@ public class FilmController {
     private final FilmService filmService;
 
     @GetMapping("/{id}")
-    public Film getFilm(@PathVariable Integer id){
+    public Film getFilm(@PathVariable Integer id) {
         log.info("Поиск фильма");
         return filmService.getFilmById(id);
     }
@@ -40,20 +40,20 @@ public class FilmController {
     }
 
     @PutMapping("/{id}/like/{userId}")
-    public Film addLike(@PathVariable Integer id, @PathVariable Integer userId){
+    public Film addLike(@PathVariable Integer id, @PathVariable Integer userId) {
         log.info("FilmController: добавление лайка");
         return filmService.addLike(id, userId);
     }
 
     @DeleteMapping("/{id}/like/{userId}")
-    public Film deleteLike(@PathVariable Integer id, @PathVariable Integer userId){
+    public Film deleteLike(@PathVariable Integer id, @PathVariable Integer userId) {
         log.info("FilmController: удаление лайка");
         return filmService.deleteLike(id, userId);
     }
 
     @GetMapping("/popular")
-    public List<Film> getMostPopular (@RequestParam(required = false) Integer count){
-        log.info(String.format("FilmController: поиск наиболее популярных %sфильмов", (count != null && count > 0 ) ? count + " " : ""));
+    public List<Film> getMostPopular(@RequestParam(required = false) Integer count) {
+        log.info(String.format("FilmController: поиск наиболее популярных %sфильмов", (count != null && count > 0) ? count + " " : ""));
         return filmService.getMostPopular(count);
     }
 }
