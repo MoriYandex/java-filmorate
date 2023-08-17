@@ -18,7 +18,7 @@ public class InMemoryUserStorage implements UserStorage {
     private Integer userIdSequence = 0;
 
     @Override
-    public User getUser(Integer id){
+    public User getUser(Integer id) {
         return allUsers.get(id);
     }
 
@@ -46,14 +46,14 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public User addFriend(Integer id, Integer friendId){
+    public User addFriend(Integer id, Integer friendId) {
         User user1 = getUser(id);
         User user2 = getUser(friendId);
         if (user1 == null)
             throw new NotFoundException(String.format("Пользователь %d не найден!", id));
         if (user2 == null)
             throw new NotFoundException(String.format("Пользователь %d не найден!", friendId));
-        if (!user1.getFriends().contains(user2.getId()) && !user2.getFriends().contains(user1.getId())){
+        if (!user1.getFriends().contains(user2.getId()) && !user2.getFriends().contains(user1.getId())) {
             user1.getFriends().add(user2.getId());
             user2.getFriends().add(user1.getId());
         }
@@ -68,7 +68,7 @@ public class InMemoryUserStorage implements UserStorage {
             throw new NotFoundException(String.format("Пользователь %d не найден!", id));
         if (user2 == null)
             throw new NotFoundException(String.format("Пользователь %d не найден!", friendId));
-        if (user1.getFriends().contains(user2.getId()) && user2.getFriends().contains(user1.getId())){
+        if (user1.getFriends().contains(user2.getId()) && user2.getFriends().contains(user1.getId())) {
             user1.getFriends().remove(user2.getId());
             user2.getFriends().remove(user1.getId());
         }
