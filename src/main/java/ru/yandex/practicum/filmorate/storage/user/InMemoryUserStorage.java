@@ -5,15 +5,13 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
 @Slf4j
 public class InMemoryUserStorage implements UserStorage {
-    private final TreeMap<Integer, User> allUsers = new TreeMap<>();
+    private final Map<Integer, User> allUsers = new HashMap<>();
     private Integer userIdSequence = 0;
 
     @Override

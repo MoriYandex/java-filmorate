@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 @Component
 @Slf4j
 public class InMemoryFilmStorage implements FilmStorage {
-    private final Map<Integer, Film> allFilms = new TreeMap<>();
+    private final Map<Integer, Film> allFilms = new HashMap<>();
     private Integer filmIdSequence = 0;
 
     @Override
