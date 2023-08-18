@@ -3,7 +3,6 @@ package ru.yandex.practicum.filmorate.storage.user;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.ArrayList;
@@ -39,7 +38,7 @@ public class InMemoryUserStorage implements UserStorage {
     @Override
     public User updateUser(User user) {
         if (!allUsers.containsKey(user.getId()))
-            throw new ValidationException("Пользователь не найден!");
+            throw new NotFoundException(String.format("Пользователь %d не найден!", user.getId()));
         allUsers.put(user.getId(), user);
         log.info(String.format("Пользователь %d успешно изменён.", user.getId()));
         return user;
@@ -47,32 +46,32 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public User addFriend(Integer id, Integer friendId) {
-        User user1 = getUser(id);
-        User user2 = getUser(friendId);
-        if (user1 == null)
-            throw new NotFoundException(String.format("Пользователь %d не найден!", id));
-        if (user2 == null)
-            throw new NotFoundException(String.format("Пользователь %d не найден!", friendId));
-        if (!user1.getFriends().contains(user2.getId()) && !user2.getFriends().contains(user1.getId())) {
-            user1.getFriends().add(user2.getId());
-            user2.getFriends().add(user1.getId());
+        User targetUser = getUser(id);
+        User friendUser = getUser(friendId);
+        if (targetUser == null)
+            throw new NotFoundException(String.format("Пользователь %d (исходный) не найден!", id));
+        if (friendUser == null)
+            throw new NotFoundException(String.format("Пользователь %d (друг) не найден!", friendId));
+        if (!targetUser.getFriends().contains(friendUser.getId()) && !friendUser.getFriends().contains(targetUser.getId())) {
+            targetUser.getFriends().add(friendUser.getId());
+            friendUser.getFriends().add(targetUser.getId());
         }
-        return user1;
+        return targetUser;
     }
 
     @Override
     public User deleteFriend(Integer id, Integer friendId) {
-        User user1 = getUser(id);
-        User user2 = getUser(friendId);
-        if (user1 == null)
-            throw new NotFoundException(String.format("Пользователь %d не найден!", id));
-        if (user2 == null)
-            throw new NotFoundException(String.format("Пользователь %d не найден!", friendId));
-        if (user1.getFriends().contains(user2.getId()) && user2.getFriends().contains(user1.getId())) {
-            user1.getFriends().remove(user2.getId());
-            user2.getFriends().remove(user1.getId());
+        User targetUser = getUser(id);
+        User friendUser = getUser(friendId);
+        if (targetUser == null)
+            throw new NotFoundException(String.format("Пользователь %d (исходный) не найден!", id));
+        if (friendUser == null)
+            throw new NotFoundException(String.format("Пользователь %d (друг) не найден!", friendId));
+        if (targetUser.getFriends().contains(friendUser.getId()) && friendUser.getFriends().contains(targetUser.getId())) {
+            targetUser.getFriends().remove(friendUser.getId());
+            friendUser.getFriends().remove(targetUser.getId());
         }
-        return user1;
+        return targetUser;
     }
 
     @Override
@@ -87,15 +86,15 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public List<User> getCommonFriends(Integer id, Integer otherId) {
-        User user1 = getUser(id);
-        User user2 = getUser(otherId);
-        if (user1 == null)
-            throw new NotFoundException(String.format("Пользователь %d не найден!", id));
-        if (user2 == null)
-            throw new NotFoundException(String.format("Пользователь %d не найден!", otherId));
+        User targetUser = getUser(id);
+        User otherUser = getUser(otherId);
+        if (targetUser == null)
+            throw new NotFoundException(String.format("Пользователь %d (первый) не найден!", id));
+        if (otherUser == null)
+            throw new NotFoundException(String.format("Пользователь %d (второй) не найден!", otherId));
         return getAllUsers()
-                .stream().filter(x -> user1.getFriends().contains(x.getId())
-                        && user2.getFriends().contains(x.getId()))
+                .stream().filter(x -> targetUser.getFriends().contains(x.getId())
+                        && otherUser.getFriends().contains(x.getId()))
                 .collect(Collectors.toList());
     }
 }

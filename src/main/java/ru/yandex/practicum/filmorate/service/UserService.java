@@ -19,6 +19,7 @@ public class UserService {
     private final UserStorage userStorage;
 
     public User getUser(Integer id) {
+        log.info(String.format("UserService: Поиск пользователя по идентификатору %d", id));
         User user = userStorage.getUser(id);
         if (user == null)
             throw new NotFoundException(String.format("Пользователь %d не найден!", id));
@@ -26,32 +27,39 @@ public class UserService {
     }
 
     public List<User> getAllUsers() {
+        log.info("UserService: Получение списка всех пользователей");
         return userStorage.getAllUsers();
     }
 
     public User addUser(User user) {
+        log.info(String.format("UserService: Добавление пользователя по идентификатору %d", user.getId()));
         validateUser(user);
         return userStorage.addUser(user);
     }
 
     public User updateUser(User user) {
+        log.info(String.format("UserService: Изменение данных пользователя по идентификатору %d", user.getId()));
         validateUser(user);
         return userStorage.updateUser(user);
     }
 
     public User addFriend(Integer id, Integer friendId) {
+        log.info(String.format("UserService: Добавление пользователем %d друга %d", id, friendId));
         return userStorage.addFriend(id, friendId);
     }
 
     public User deleteFriend(Integer id, Integer friendId) {
+        log.info(String.format("UserService: Удаление пользователем %d друга %d", id, friendId));
         return userStorage.deleteFriend(id, friendId);
     }
 
     public List<User> getAllFriends(Integer id) {
+        log.info(String.format("UserService: Получение списка друзей пользователя %d", id));
         return userStorage.getAllFriends(id);
     }
 
     public List<User> getCommonFriends(Integer id, Integer otherId) {
+        log.info(String.format("UserService: Получение списка друзей пользователя %d, общих с пользователем %d", id, otherId));
         return userStorage.getCommonFriends(id, otherId);
     }
 

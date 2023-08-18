@@ -25,6 +25,7 @@ public class FilmService {
     private final UserStorage userStorage;
 
     public Film getFilmById(Integer id) {
+        log.info(String.format("FilmService: Поиск фильма по идентификатору %d", id));
         Film film = filmStorage.getFilm(id);
         if (film == null)
             throw new NotFoundException(String.format("Фильм %d не найден!", id));
@@ -32,20 +33,24 @@ public class FilmService {
     }
 
     public List<Film> getAllFilms() {
+        log.info("FilmService: Получение списка всех фильмов");
         return filmStorage.getAllFilms();
     }
 
     public Film addFilm(Film film) {
+        log.info(String.format("FilmService: Добавление фильма по идентификатору %d", film.getId()));
         validateFilm(film);
         return filmStorage.addFilm(film);
     }
 
     public Film updateFilm(Film film) {
+        log.info(String.format("FilmService: Изменение данных фильма по идентификатору %d", film.getId()));
         validateFilm(film);
         return filmStorage.updateFilm(film);
     }
 
     public Film addLike(Integer id, Integer userId) {
+        log.info(String.format("FilmService: Добавление лайка фильму %d пользователем %d", id, userId));
         User user = userStorage.getUser(userId);
         if (user == null)
             throw new NotFoundException(String.format("Пользователь %d не найден!", id));
@@ -53,6 +58,7 @@ public class FilmService {
     }
 
     public Film deleteLike(Integer id, Integer userId) {
+        log.info(String.format("FilmService: Удаление лайка фильму %d пользователем %d", id, userId));
         User user = userStorage.getUser(userId);
         if (user == null)
             throw new NotFoundException(String.format("Пользователь %d не найден!", id));
@@ -60,7 +66,9 @@ public class FilmService {
     }
 
     public List<Film> getMostPopular(Integer count) {
-        return filmStorage.getMostPopular((count != null && count > 0) ? count : MOST_POPULAR_QUANTITY);
+        int filmCount = (count != null && count > 0) ? count : MOST_POPULAR_QUANTITY;
+        log.info(String.format("FilmService: Вывод %d наиболее популярных фильмов", filmCount));
+        return filmStorage.getMostPopular(filmCount);
     }
 
     public void validateFilm(Film film) {
