@@ -89,7 +89,7 @@ public class FilmService {
             log.error(errorMessage);
             throw new ValidationException(errorMessage);
         }
-        if (film.getReleaseDate() != null && film.getReleaseDate().toLocalDate().isBefore(MIN_RELEASE_DATE)) {
+        if (film.getReleaseDate() != null && film.getReleaseDate().isBefore(MIN_RELEASE_DATE)) {
             String tooOldMessage = "Дата релиза не может быть ранее %s!";
             String errorMessage = String.format(tooOldMessage, MIN_RELEASE_DATE.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
             log.error(errorMessage);

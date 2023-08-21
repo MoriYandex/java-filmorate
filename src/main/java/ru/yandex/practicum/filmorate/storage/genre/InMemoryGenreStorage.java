@@ -39,4 +39,9 @@ public class InMemoryGenreStorage implements GenreStorage {
     public List<Genre> getAllGenresByFilmId(Integer filmId) {
         return new ArrayList<>();
     }
+
+    @Override
+    public Map<Integer, List<Genre>> getMapOfGenresToFilms() {
+        return new HashMap<>();
+    }
 }

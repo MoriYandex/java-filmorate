@@ -7,7 +7,6 @@ import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
 
-import java.sql.Date;
 import java.time.LocalDate;
 import java.util.HashSet;
 
@@ -19,15 +18,15 @@ class UserControllerTests {
 
     @Test
     void validateUser() {
-        final User user1 = new User(0, "", "login", "name", Date.valueOf("1983-07-01"), new HashSet<>());
+        final User user1 = new User(0, "", "login", "name", LocalDate.of(1983, 7, 1), new HashSet<>());
         assertThrows(ValidationException.class, () -> userService.validateUser(user1));
-        final User user2 = new User(0, "wrongemail", "login", "name", Date.valueOf("1983-07-01"), new HashSet<>());
+        final User user2 = new User(0, "wrongemail", "login", "name", LocalDate.of(1983, 7, 1), new HashSet<>());
         assertThrows(ValidationException.class, () -> userService.validateUser(user2));
-        final User user3 = new User(0, "wrong@email", "  ", "name", Date.valueOf("1983-07-01"), new HashSet<>());
+        final User user3 = new User(0, "wrong@email", "  ", "name", LocalDate.of(1983, 7, 1), new HashSet<>());
         assertThrows(ValidationException.class, () -> userService.validateUser(user3));
-        final User user4 = new User(0, "wrong@email", "1 2", "name", Date.valueOf("1983-07-01"), new HashSet<>());
+        final User user4 = new User(0, "wrong@email", "1 2", "name", LocalDate.of(1983, 7, 1), new HashSet<>());
         assertThrows(ValidationException.class, () -> userService.validateUser(user4));
-        final User user5 = new User(0, "wrong@email", "12", "name", Date.valueOf("2083-07-01"), new HashSet<>());
+        final User user5 = new User(0, "wrong@email", "12", "name", LocalDate.of(2083, 7, 1), new HashSet<>());
         assertThrows(ValidationException.class, () -> userService.validateUser(user5));
         user1.setEmail("@");
         userService.validateUser(user1);
@@ -41,9 +40,9 @@ class UserControllerTests {
         user4.setLogin("12");
         userService.validateUser(user4);
         assertEquals(user4.getLogin(), "12");
-        user5.setBirthday(Date.valueOf(LocalDate.now()));
+        user5.setBirthday(LocalDate.now());
         userService.validateUser(user5);
-        assertEquals(user5.getBirthday(), Date.valueOf(LocalDate.now()));
+        assertEquals(user5.getBirthday(), LocalDate.now());
         user3.setName("");
         userService.validateUser(user3);
         assertEquals(user3.getName(), user3.getLogin());

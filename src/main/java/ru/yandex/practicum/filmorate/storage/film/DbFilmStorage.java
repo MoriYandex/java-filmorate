@@ -10,6 +10,7 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Like;
 import ru.yandex.practicum.filmorate.model.Rating;
 import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 
@@ -17,6 +18,7 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -48,8 +50,13 @@ public class DbFilmStorage implements FilmStorage {
     public List<Film> getAllFilms() {
         String query = "SELECT * FROM t001_films t001 LEFT JOIN t006_ratings t006 ON t006.t006_id = t001.t006_id";
         List<Film> resultList = jdbcTemplate.query(query, (rs, rowNum) -> mapRecordToFilm(rs));
-        resultList.forEach(film -> film.setGenres(genreStorage.getAllGenresByFilmId(film.getId())));
-        resultList.forEach(film -> film.setLikes(getLikesByFilmId(film.getId())));
+        Map<Integer, List<Genre>> mapGenresToFilms = genreStorage.getMapOfGenresToFilms();
+        List<Like> likeList = getAllLikes();
+        for (Film film : resultList) {
+            List<Genre> genreList = mapGenresToFilms.get(film.getId());
+            film.setGenres(genreList != null ? genreList : new ArrayList<>());
+            film.setLikes(likeList.stream().filter(x -> film.getId().equals(x.getFilmId())).map(Like::getUserId).collect(Collectors.toSet()));
+        }
         return resultList;
     }
 
@@ -62,7 +69,7 @@ public class DbFilmStorage implements FilmStorage {
             PreparedStatement statement = connection.prepareStatement(sqlQueryT001, new String[]{"t001_id"});
             statement.setString(1, film.getName());
             statement.setString(2, film.getDescription());
-            statement.setDate(3, film.getReleaseDate());
+            statement.setDate(3, Date.valueOf(film.getReleaseDate()));
             statement.setInt(4, film.getDuration());
             statement.setInt(5, film.getMpa().getId());
             return statement;
@@ -139,7 +146,7 @@ public class DbFilmStorage implements FilmStorage {
             Integer id = rs.getInt("t001_id");
             String name = rs.getString("t001_name");
             String description = rs.getString("t001_description");
-            Date releaseDate = rs.getDate("t001_release_date");
+            LocalDate releaseDate = rs.getDate("t001_release_date").toLocalDate();
             Integer duration = rs.getInt("t001_duration");
             Integer ratingId = rs.getInt("t006_id");
             String ratingName = rs.getString("t006_code");
@@ -154,5 +161,21 @@ public class DbFilmStorage implements FilmStorage {
         String sqlQueryT003 = "SELECT t002_id FROM t003_likes WHERE t001_id = ?";
         List<Integer> resultList = jdbcTemplate.query(sqlQueryT003, (rs, rowNum) -> rs.getInt("t002_id"), id);
         return new HashSet<>(resultList);
+    }
+
+    private Like mapRecordToLike(ResultSet rs) {
+        try {
+            Integer id = rs.getInt("t003_id");
+            Integer filmId = rs.getInt("t001_id");
+            Integer userId = rs.getInt("t002_id");
+            return new Like(id, filmId, userId);
+        } catch (SQLException e) {
+            throw new ValidationException(String.format("Неверная строка записи о лайке! Сообщение: %s", e.getMessage()));
+        }
+    }
+
+    private List<Like> getAllLikes() {
+        String sqlQueryT003 = "SELECT * FROM t003_likes";
+        return jdbcTemplate.query(sqlQueryT003, (rs, rowNum) -> mapRecordToLike(rs));
     }
 }

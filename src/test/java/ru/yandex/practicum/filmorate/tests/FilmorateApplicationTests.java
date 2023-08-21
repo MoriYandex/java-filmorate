@@ -12,7 +12,6 @@ import ru.yandex.practicum.filmorate.storage.genre.DbGenreStorage;
 import ru.yandex.practicum.filmorate.storage.rating.DbRatingStorage;
 import ru.yandex.practicum.filmorate.storage.user.DbUserStorage;
 
-import java.sql.Date;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -43,7 +42,7 @@ class FilmorateApplicationTests {
     }
 
     public void test1Users() {
-        User user1 = new User(0, "a@b.ru", "login", "name", Date.valueOf("1983-07-01"), new HashSet<>());
+        User user1 = new User(0, "a@b.ru", "login", "name", LocalDate.of(1983, 7, 1), new HashSet<>());
         userStorage.addUser(user1);
         User user2 = userStorage.getUser(1);
         assertEquals(user1.getId(), 1);
@@ -98,7 +97,7 @@ class FilmorateApplicationTests {
         Film film1 = new Film(5,
                 "Film1",
                 "description1",
-                Date.valueOf(LocalDate.now()),
+                LocalDate.now(),
                 100,
                 genres,
                 ratingStorage.getRating(2),

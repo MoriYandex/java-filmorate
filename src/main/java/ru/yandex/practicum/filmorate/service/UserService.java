@@ -88,7 +88,7 @@ public class UserService {
             log.error(loginWithWhitespaceMessage);
             throw new ValidationException(loginWithWhitespaceMessage);
         }
-        if (user.getBirthday() != null && user.getBirthday().toLocalDate().isAfter(LocalDate.now())) {
+        if (user.getBirthday() != null && user.getBirthday().isAfter(LocalDate.now())) {
             String futureBirthdateMessage = "Дата рождения не может быть в будущем!";
             log.error(futureBirthdateMessage);
             throw new ValidationException(futureBirthdateMessage);

@@ -16,6 +16,7 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -62,7 +63,7 @@ public class DbUserStorage implements UserStorage {
             statement.setString(1, user.getEmail());
             statement.setString(2, user.getLogin());
             statement.setString(3, user.getName());
-            statement.setDate(4, user.getBirthday());
+            statement.setDate(4, Date.valueOf(user.getBirthday()));
             return statement;
         }, keyHolder);
         user.setId(keyHolder.getKey().intValue());
@@ -150,7 +151,7 @@ public class DbUserStorage implements UserStorage {
             String email = rs.getString("t002_email");
             String login = rs.getString("t002_login");
             String name = rs.getString("t002_name");
-            Date birthday = rs.getDate("t002_birthday");
+            LocalDate birthday = rs.getDate("t002_birthday").toLocalDate();
             return new User(id, email, login, name, birthday, new HashSet<>());
         } catch (SQLException e) {
             throw new ValidationException(String.format("Неверная строка записи о пользователе! Сообщение: %s", e.getMessage()));
@@ -159,10 +160,5 @@ public class DbUserStorage implements UserStorage {
 
     private List<User> getUsersByIds(List<Integer> ids) {
         return getAllUsers().stream().filter(x -> ids.contains(x.getId())).collect(Collectors.toList());
-        /*String sqlQueryT002 = "SELECT * FROM t002_users WHERE t002_id IN (?)";
-        if (ids.isEmpty())
-            return new ArrayList<>();
-        String idsString = String.join(", ", ids.stream().map(Object::toString).collect(Collectors.toList()));
-        return jdbcTemplate.query(sqlQueryT002, (rs, rowNum) -> mapRecordToUser(rs), idsString);*/
     }
 }
