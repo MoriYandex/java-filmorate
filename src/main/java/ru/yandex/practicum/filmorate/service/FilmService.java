@@ -1,7 +1,7 @@
 package ru.yandex.practicum.filmorate.service;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
@@ -16,13 +16,19 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class FilmService {
     private static final LocalDate MIN_RELEASE_DATE = LocalDate.of(1895, 12, 28);
     private static final int MOST_POPULAR_QUANTITY = 10;
     private final FilmStorage filmStorage;
+
     private final UserStorage userStorage;
+
+    public FilmService(@Qualifier("DbFilmStorage")
+                       FilmStorage filmStorage, @Qualifier("DbUserStorage") UserStorage userStorage) {
+        this.filmStorage = filmStorage;
+        this.userStorage = userStorage;
+    }
 
     public Film getFilmById(Integer id) {
         log.info(String.format("FilmService: Поиск фильма по идентификатору %d", id));
@@ -38,7 +44,7 @@ public class FilmService {
     }
 
     public Film addFilm(Film film) {
-        log.info(String.format("FilmService: Добавление фильма по идентификатору %d", film.getId()));
+        log.info("FilmService: Добавление фильма");
         validateFilm(film);
         return filmStorage.addFilm(film);
     }
@@ -53,7 +59,7 @@ public class FilmService {
         log.info(String.format("FilmService: Добавление лайка фильму %d пользователем %d", id, userId));
         User user = userStorage.getUser(userId);
         if (user == null)
-            throw new NotFoundException(String.format("Пользователь %d не найден!", id));
+            throw new NotFoundException(String.format("Пользователь %d не найден!", userId));
         return filmStorage.addLike(id, userId);
     }
 
@@ -83,7 +89,7 @@ public class FilmService {
             log.error(errorMessage);
             throw new ValidationException(errorMessage);
         }
-        if (film.getReleaseDate() != null && film.getReleaseDate().isBefore(MIN_RELEASE_DATE)) {
+        if (film.getReleaseDate() != null && film.getReleaseDate().toLocalDate().isBefore(MIN_RELEASE_DATE)) {
             String tooOldMessage = "Дата релиза не может быть ранее %s!";
             String errorMessage = String.format(tooOldMessage, MIN_RELEASE_DATE.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
             log.error(errorMessage);

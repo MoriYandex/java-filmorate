@@ -1,7 +1,7 @@
 package ru.yandex.practicum.filmorate.service;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
@@ -13,10 +13,14 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class UserService {
     private final UserStorage userStorage;
+
+    public UserService(@Qualifier("DbUserStorage")
+                       UserStorage userStorage) {
+        this.userStorage = userStorage;
+    }
 
     public User getUser(Integer id) {
         log.info(String.format("UserService: Поиск пользователя по идентификатору %d", id));
@@ -32,7 +36,7 @@ public class UserService {
     }
 
     public User addUser(User user) {
-        log.info(String.format("UserService: Добавление пользователя по идентификатору %d", user.getId()));
+        log.info("UserService: Добавление пользователя");
         validateUser(user);
         return userStorage.addUser(user);
     }
@@ -84,7 +88,7 @@ public class UserService {
             log.error(loginWithWhitespaceMessage);
             throw new ValidationException(loginWithWhitespaceMessage);
         }
-        if (user.getBirthday() != null && user.getBirthday().isAfter(LocalDate.now())) {
+        if (user.getBirthday() != null && user.getBirthday().toLocalDate().isAfter(LocalDate.now())) {
             String futureBirthdateMessage = "Дата рождения не может быть в будущем!";
             log.error(futureBirthdateMessage);
             throw new ValidationException(futureBirthdateMessage);

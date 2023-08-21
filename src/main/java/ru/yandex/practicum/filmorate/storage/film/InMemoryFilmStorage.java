@@ -8,7 +8,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Component
+@Component("InMemoryFilmStorage")
 @Slf4j
 public class InMemoryFilmStorage implements FilmStorage {
     private final Map<Integer, Film> allFilms = new HashMap<>();
@@ -58,7 +58,7 @@ public class InMemoryFilmStorage implements FilmStorage {
         if (film == null)
             throw new NotFoundException(String.format("Фильм %d не найден!", id));
         film.getLikes().remove(userId);
-        log.info(String.format("Добавлен лайк фильму %d пользователем %d.", id, userId));
+        log.info(String.format("Удалён лайк фильму %d пользователем %d.", id, userId));
         return film;
     }
 

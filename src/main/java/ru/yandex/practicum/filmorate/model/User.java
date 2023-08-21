@@ -3,7 +3,8 @@ package ru.yandex.practicum.filmorate.model;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-import java.time.LocalDate;
+import java.sql.Date;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -14,6 +15,6 @@ public class User {
     private String email;
     private String login;
     private String name;
-    private LocalDate birthday;
-    private final Set<Integer> friends = new TreeSet<>();
+    private Date birthday;
+    private Set<Integer> friends;
 }
