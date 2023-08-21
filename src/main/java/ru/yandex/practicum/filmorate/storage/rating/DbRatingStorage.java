@@ -16,7 +16,7 @@ import java.util.List;
 @Qualifier("DbRatingStorage")
 @Slf4j
 @RequiredArgsConstructor
-public class DbRatingStorage implements RatingStorage{
+public class DbRatingStorage implements RatingStorage {
     private final JdbcTemplate jdbcTemplate;
 
     @Override
@@ -32,14 +32,13 @@ public class DbRatingStorage implements RatingStorage{
         return jdbcTemplate.query(query, (rs, rowNum) -> mapRating(rs));
     }
 
-    private Rating mapRating(ResultSet rs){
-        try{
+    private Rating mapRating(ResultSet rs) {
+        try {
             Integer id = rs.getInt("t006_id");
             String name = rs.getString("t006_code");
             String description = rs.getString("t006_description");
             return new Rating(id, name, description);
-        }
-        catch (SQLException e){
+        } catch (SQLException e) {
             throw new ValidationException(String.format("Неверная строка записи о рейтинге! Сообщение: %s", e.getMessage()));
         }
     }
