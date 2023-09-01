@@ -105,8 +105,8 @@ public class DbReviewStorage implements ReviewStorage {
         }
 
         return resultList.stream()
-            .sorted(Comparator.comparing(Review::getUseful).reversed()).
-            collect(Collectors.toList());
+            .sorted(Comparator.comparing(Review::getUseful).reversed())
+            .collect(Collectors.toList());
     }
 
     @Override
