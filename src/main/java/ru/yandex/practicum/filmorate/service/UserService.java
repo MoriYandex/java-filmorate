@@ -47,6 +47,11 @@ public class UserService {
         return userStorage.updateUser(user);
     }
 
+    public User deleteUser(Integer id) {
+        log.info("UserService: Удаление пользователя");
+        return userStorage.delete(id);
+    }
+
     public User addFriend(Integer id, Integer friendId) {
         log.info(String.format("UserService: Добавление пользователем %d друга %d", id, friendId));
         return userStorage.addFriend(id, friendId);
@@ -58,8 +63,12 @@ public class UserService {
     }
 
     public List<User> getAllFriends(Integer id) {
-        log.info(String.format("UserService: Получение списка друзей пользователя %d", id));
-        return userStorage.getAllFriends(id);
+        if (isExist(id)) {
+            log.info(String.format("UserService: Получение списка друзей пользователя %d", id));
+            return userStorage.getAllFriends(id);
+        } else {
+            throw new NotFoundException(String.format("Пользователя с id %d не существует.", id));
+        }
     }
 
     public List<User> getCommonFriends(Integer id, Integer otherId) {
@@ -95,5 +104,14 @@ public class UserService {
         }
         if (!StringUtils.hasText(user.getName()))
             user.setName(user.getLogin());
+    }
+
+    private boolean isExist(int id) {
+        for (User user : userStorage.getAllUsers()) {
+            if (id == user.getId()) {
+                return true;
+            }
+        }
+        return false;
     }
 }
