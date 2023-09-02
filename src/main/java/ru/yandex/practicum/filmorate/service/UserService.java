@@ -1,12 +1,14 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.feed.EventTypeEnum;
+import ru.yandex.practicum.filmorate.model.feed.OperationEnum;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
@@ -16,10 +18,12 @@ import java.util.List;
 @Slf4j
 public class UserService {
     private final UserStorage userStorage;
+    private final FeedService feedService;
 
-    public UserService(@Qualifier("DbUserStorage")
-                       UserStorage userStorage) {
+    @Autowired
+    public UserService(UserStorage userStorage, FeedService feedService) {
         this.userStorage = userStorage;
+        this.feedService = feedService;
     }
 
     public User getUser(Integer id) {
@@ -49,11 +53,17 @@ public class UserService {
 
     public User addFriend(Integer id, Integer friendId) {
         log.info(String.format("UserService: Добавление пользователем %d друга %d", id, friendId));
+
+        feedService.toFeed(friendId, id, EventTypeEnum.FRIEND, OperationEnum.ADD);
+
         return userStorage.addFriend(id, friendId);
     }
 
     public User deleteFriend(Integer id, Integer friendId) {
         log.info(String.format("UserService: Удаление пользователем %d друга %d", id, friendId));
+
+        feedService.toFeed(friendId, id, EventTypeEnum.FRIEND, OperationEnum.REMOVE);
+
         return userStorage.deleteFriend(id, friendId);
     }
 

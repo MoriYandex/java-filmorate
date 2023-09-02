@@ -1,13 +1,15 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.feed.EventTypeEnum;
+import ru.yandex.practicum.filmorate.model.feed.OperationEnum;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
@@ -23,11 +25,19 @@ public class FilmService {
     private final FilmStorage filmStorage;
 
     private final UserStorage userStorage;
+    private final FeedService feedService;
 
-    public FilmService(@Qualifier("DbFilmStorage")
-                       FilmStorage filmStorage, @Qualifier("DbUserStorage") UserStorage userStorage) {
+
+//    public FilmService(@Qualifier("DbFilmStorage")
+//                       FilmStorage filmStorage, UserStorage userStorage) {
+//        this.filmStorage = filmStorage;
+//        this.userStorage = userStorage;
+//    }
+    @Autowired
+    public FilmService(FilmStorage filmStorage, UserStorage userStorage, FeedService feedService) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
+        this.feedService = feedService;
     }
 
     public Film getFilmById(Integer id) {
@@ -58,6 +68,9 @@ public class FilmService {
     public Film addLike(Integer id, Integer userId) {
         log.info(String.format("FilmService: Добавление лайка фильму %d пользователем %d", id, userId));
         User user = userStorage.getUser(userId);
+
+        feedService.toFeed(id, userId, EventTypeEnum.LIKE, OperationEnum.ADD);
+
         if (user == null)
             throw new NotFoundException(String.format("Пользователь %d не найден!", userId));
         return filmStorage.addLike(id, userId);
@@ -66,6 +79,9 @@ public class FilmService {
     public Film deleteLike(Integer id, Integer userId) {
         log.info(String.format("FilmService: Удаление лайка фильму %d пользователем %d", id, userId));
         User user = userStorage.getUser(userId);
+
+        feedService.toFeed(id, userId, EventTypeEnum.LIKE, OperationEnum.REMOVE);
+
         if (user == null)
             throw new NotFoundException(String.format("Пользователь %d не найден!", id));
         return filmStorage.deleteLike(id, userId);
