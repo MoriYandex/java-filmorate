@@ -3,8 +3,10 @@ package ru.yandex.practicum.filmorate.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.FilmSortBy;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 
 @RestController
@@ -46,5 +48,10 @@ public class FilmController {
     @GetMapping("/popular")
     public List<Film> getMostPopular(@RequestParam(required = false) Integer count) {
         return filmService.getMostPopular(count);
+    }
+
+    @GetMapping("/director/{directorId}")
+    public List<Film> filmsByDirector(@PathVariable int directorId, @RequestParam FilmSortBy sortBy) {
+        return filmService.getFilmsByDirectorSorted(directorId, sortBy);
     }
 }

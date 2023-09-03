@@ -2,16 +2,15 @@ package ru.yandex.practicum.filmorate.storage.film;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Like;
-import ru.yandex.practicum.filmorate.model.Rating;
+import ru.yandex.practicum.filmorate.model.*;
 import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 
 import java.sql.Date;
@@ -62,7 +61,7 @@ public class DbFilmStorage implements FilmStorage {
 
     @Override
     public Film addFilm(Film film) {
-        String sqlQueryT001 = "INSERT INTO t001_films (t001_name, t001_description, t001_release_date, t001_duration, t006_id) VALUES (?, ?, ?, ?, ?)";
+        String sqlQueryT001 = "INSERT INTO t001_films (t001_name, t001_description, t001_release_date, t001_duration, t006_id,) VALUES (?, ?, ?, ?, ?)";
         String sqlQueryT007 = "INSERT INTO t007_links_t001_t005 (t001_id, t005_id) VALUES (?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
@@ -87,7 +86,7 @@ public class DbFilmStorage implements FilmStorage {
         if (getFilm(film.getId()) == null) {
             throw new NotFoundException(String.format("Фильм %d не найден!", film.getId()));
         }
-        String sqlQueryT001 = "UPDATE t001_films SET t001_name = ?, t001_description = ?, t001_release_date = ?, t001_duration = ?, t006_id = ? WHERE t001_id = ?";
+        String sqlQueryT001 = "UPDATE t001_films SET t001_name = ?, t001_description = ?, t001_release_date = ?, t001_duration = ?, t006_id = ?, t008_id = ? WHERE t001_id = ?";
         String sqlQueryT007Clear = "DELETE FROM t007_links_t001_t005 WHERE t001_id = ?";
         String sqlQueryT007Insert = "INSERT INTO t007_links_t001_t005 (t001_id, t005_id) VALUES (?, ?)";
         jdbcTemplate.update(sqlQueryT001,
@@ -151,7 +150,8 @@ public class DbFilmStorage implements FilmStorage {
             Integer ratingId = rs.getInt("t006_id");
             String ratingName = rs.getString("t006_code");
             String ratingDescription = rs.getString("t006_description");
-            return new Film(id, name, description, releaseDate, duration, new ArrayList<>(), new Rating(ratingId, ratingName, ratingDescription), new HashSet<>());
+            return new Film(id, name, description, releaseDate, duration, new ArrayList<>(),
+                    new Rating(ratingId, ratingName, ratingDescription), new HashSet<>(), new HashSet<>());
         } catch (SQLException e) {
             throw new ValidationException(String.format("Неверная строка записи о фильме! Сообщение: %s", e.getMessage()));
         }
@@ -177,5 +177,67 @@ public class DbFilmStorage implements FilmStorage {
     private List<Like> getAllLikes() {
         String sqlQueryT003 = "SELECT * FROM t003_likes";
         return jdbcTemplate.query(sqlQueryT003, (rs, rowNum) -> mapRecordToLike(rs));
+    }
+
+    @Override
+    public List<Film> findFilmsByDirector(String query) {
+        String sqlQuery = "SELECT t001_films.t001_id, t001_films.t001_name, t001_films.t001_description, t001_films.t001_release_date, t001_films.t001_duration, t001_films.t006_id, " +
+                "t006_ratings.t006_code, t006_ratings.t006_description, t008_directors.t008_id, t008_directors.t008_name " +
+                "FROM t001_films " +
+                "LEFT JOIN t003_likes ON t001_films.t001_id = t003_likes.t001_id " +
+                "LEFT JOIN t007_links_t001_t008 ON t001_films.t001_id = t007_links_t001_t008.t001_id " +
+                "LEFT JOIN t008_directors ON t007_links_t001_t008.t008_id = t008_directors.t008_id " +
+                "JOIN t006_ratings ON t001_films.t006_id = t006_ratings.t006_id " +
+                "WHERE LOWER(t008_directors.t008_name) LIKE ? " +
+                "GROUP BY t001_films.t001_id " +
+                "ORDER BY COUNT(t003_likes.t001_id) DESC";
+        return Collections.singletonList(jdbcTemplate.query(sqlQuery, this::mapRecordToFilm, "%" + query + "%"));
+    }
+
+    @Override
+    public List<Film> findFilmsByDirectorTitle(String query) {
+        String sqlQuery = "SELECT t001_films.t001_id, t001_films.t001_name, t001_films.t001_description, t001_films.t001_release_date, t001_films.t001_duration, t001_films.t006_id, " +
+                "t006_ratings.t006_code, t006_ratings.t006_description, t008_directors.t008_id, t008_directors.t008_name " +
+                "FROM t001_films " +
+                "LEFT JOIN t003_likes ON t001_films.t001_id = t003_likes.t001_id " +
+                "LEFT JOIN t007_links_t001_t008 ON t001_films.t001_id = t007_links_t001_t008.t001_id " +
+                "LEFT JOIN t008_directors ON t007_links_t001_t008.t008_id = t008_directors.t008_id " +
+                "JOIN t006_ratings ON t001_films.t006_id = t006_ratings.t006_id " +
+                "WHERE LOWER(t001_films.t001_name) LIKE ? OR LOWER(t008_directors.t008_name) LIKE ? " +
+                "GROUP BY t001_films.t001_id " +
+                "ORDER BY COUNT(t003_likes.t001_id) DESC";
+        return Collections.singletonList(jdbcTemplate.query(sqlQuery, this::mapRecordToFilm, "%" + query + "%", "%" + query + "%"));
+    }
+
+    @Override
+    public List<Film> getFilmsByDirectorSortedByLikes(int directorId) {
+        String sqlQuery = "SELECT t001_films.t001_id, t001_films.t001_name, t001_films.t001_description, t001_films.t001_release_date, t001_films.t001_duration, " +
+                "t001_films.t006_id, t006_ratings.t006_code, t006_ratings.t006_description " +
+                "FROM t001_films " +
+                "LEFT JOIN t003_likes ON t001_films.t001_id = t003_likes.t001_id " +
+                "LEFT JOIN t007_links_t001_t008 ON t001_films.t001_id = t007_links_t001_t008.t001_id " +
+                "JOIN t006_ratings ON t001_films.t006_id = t006_ratings.t006_id " +
+                "WHERE t007_links_t001_t008.t008_id = ? " +
+                "GROUP BY t001_films.t001_id " +
+                "ORDER BY COUNT(t003_likes.t001_id) DESC";
+        return Collections.singletonList(jdbcTemplate.query(sqlQuery, this::mapRecordToFilm, directorId));
+    }
+
+    @Override
+    public List<Film> getFilmsByDirectorSortedByYears(int directorId) {
+        String sqlQuery = "SELECT t001_films.t001_id, t001_films.t001_name, t001_films.t001_description, t001_films.t001_release_date, t001_films.t001_duration, " +
+                "t001_films.t006_id, t006_ratings.t006_code, t006_ratings.t006_description " +
+                "FROM t001_films " +
+                "JOIN t007_links_t001_t008 ON t001_films.t001_id = t007_links_t001_t008.t001_id " +
+                "JOIN t006_ratings ON t001_films.t006_id = t006_ratings.t006_id " +
+                "WHERE t007_links_t001_t008.t008_id = ? " +
+                "ORDER BY t001_films.t001_release_date";
+        return Collections.singletonList(jdbcTemplate.query(sqlQuery, this::mapRecordToFilm, directorId));
+    }
+
+    @Override
+    public void addDirectorToFilm(int filmId, int directorId) {
+        String sqlQuery = "INSERT INTO t007_links_t001_t008 (t001_id, t008_id) VALUES (?, ?)";
+        jdbcTemplate.update(sqlQuery, filmId, directorId);
     }
 }

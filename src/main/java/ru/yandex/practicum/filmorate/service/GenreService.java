@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 
@@ -30,5 +31,9 @@ public class GenreService {
     public List<Genre> getAllGenres() {
         log.info("GenreService: Получение списка всех жанров");
         return genreStorage.getAllGenres();
+    }
+
+    public void load(List<Film> films) {
+        genreStorage.load(films);
     }
 }

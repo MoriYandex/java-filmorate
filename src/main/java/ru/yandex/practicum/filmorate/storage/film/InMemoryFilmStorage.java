@@ -70,4 +70,29 @@ public class InMemoryFilmStorage implements FilmStorage {
                 .collect(Collectors.toList());
 
     }
+
+    @Override
+    public List<Film> getFilmsByDirectorSortedByLikes(int directorId) {
+        return null;
+    }
+
+    @Override
+    public List<Film> getFilmsByDirectorSortedByYears(int directorId) {
+        return null;
+    }
+
+    @Override
+    public void addDirectorToFilm(int filmId, int directorId) {
+
+    }
+
+    @Override
+    public List<Film> findFilmsByDirector(String query) {
+        return null;
+    }
+
+    @Override
+    public List<Film> findFilmsByDirectorTitle(String query) {
+        return null;
+    }
 }

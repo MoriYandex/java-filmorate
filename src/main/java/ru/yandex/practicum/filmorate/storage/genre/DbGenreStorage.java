@@ -7,15 +7,16 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.GenreToFilm;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static java.util.function.UnaryOperator.identity;
 
 @Component
 @Qualifier("DbGenreStorage")
@@ -29,6 +30,23 @@ public class DbGenreStorage implements GenreStorage {
         String query = "SELECT * FROM t005_genres WHERE t005_id = ?";
         List<Genre> resultList = jdbcTemplate.query(query, (rs, rowNum) -> mapRecordToGenre(rs), id);
         return resultList.stream().findFirst().orElse(null);
+    }
+
+    @Override
+    public void load(List<Film> films) {
+        final Map<Integer, Film> filmById = films.stream().collect(Collectors.toMap(Film::getId, identity()));
+
+        String inSql = String.join(",", Collections.nCopies(films.size(), "?"));
+
+        final String sqlQuery = "SELECT t005_genres.t005_id, t005_genres.t005_name " +
+                "FROM t007_links_t001_t005 " +
+                "JOIN t005_genres ON t007_links_t001_t005.t005_id = t005_genres.t005_id " +
+                "WHERE t007_links_t001_t005.t001_id IN (" + inSql + ")";
+
+        jdbcTemplate.query(sqlQuery, (rs) -> {
+            final Film film = filmById.get(rs.getInt("t001_id"));
+            film.addGenre(mapRecordToGenre(rs));
+        }, films.stream().map(Film::getId).toArray());
     }
 
     @Override

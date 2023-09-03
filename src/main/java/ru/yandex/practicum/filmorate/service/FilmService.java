@@ -7,12 +7,14 @@ import org.springframework.util.StringUtils;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.FilmSortBy;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
 import java.util.List;
 
 @Service
@@ -20,14 +22,19 @@ import java.util.List;
 public class FilmService {
     private static final LocalDate MIN_RELEASE_DATE = LocalDate.of(1895, 12, 28);
     private static final int MOST_POPULAR_QUANTITY = 10;
-    private final FilmStorage filmStorage;
 
+    private final FilmStorage filmStorage;
     private final UserStorage userStorage;
+    private final DirectorService directorService;
+    private final GenreService genreService;
+
 
     public FilmService(@Qualifier("DbFilmStorage")
-                       FilmStorage filmStorage, @Qualifier("DbUserStorage") UserStorage userStorage) {
+                       FilmStorage filmStorage, @Qualifier("DbUserStorage") UserStorage userStorage, DirectorService directorService, GenreService genreService) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
+        this.directorService = directorService;
+        this.genreService = genreService;
     }
 
     public Film getFilmById(Integer id) {
@@ -38,6 +45,28 @@ public class FilmService {
         return film;
     }
 
+    public List<Film> getFilmsByDirectorSorted(int directorId, FilmSortBy sortBy) {
+        if (sortBy == null) {
+            throw new ValidationException("Пустой параметр сортировки");
+        }
+        if (!directorService.isDirectorExists(directorId)) {
+            throw new NotFoundException("Режиссер не найден");
+        }
+        if (sortBy == FilmSortBy.likes) {
+            List<Film> films = filmStorage.getFilmsByDirectorSortedByLikes(directorId);
+            genreService.load(films);
+            directorService.load(films);
+            return films;
+        } else if (sortBy == FilmSortBy.year) {
+            List<Film> films = filmStorage.getFilmsByDirectorSortedByYears(directorId);
+            genreService.load(films);
+            directorService.load(films);
+            return films;
+        } else {
+            throw new ValidationException("Неверно указан параметр");
+        }
+    }
+
     public List<Film> getAllFilms() {
         log.info("FilmService: Получение списка всех фильмов");
         return filmStorage.getAllFilms();
@@ -46,13 +75,25 @@ public class FilmService {
     public Film addFilm(Film film) {
         log.info("FilmService: Добавление фильма");
         validateFilm(film);
-        return filmStorage.addFilm(film);
+        filmStorage.addFilm(film);
+        if (film.getDirectors() != null) {
+            directorService.addDirector(film);
+        }
+        return film;
     }
 
     public Film updateFilm(Film film) {
         log.info(String.format("FilmService: Изменение данных фильма по идентификатору %d", film.getId()));
         validateFilm(film);
-        return filmStorage.updateFilm(film);
+        directorService.deleteDirectorByFilm(film.getId());
+        filmStorage.updateFilm(film);
+        if (film.getDirectors() != null) {
+            directorService.addDirector(film);
+        } else {
+            film.setDirectors(new HashSet<>());
+        }
+        return film;
+
     }
 
     public Film addLike(Integer id, Integer userId) {

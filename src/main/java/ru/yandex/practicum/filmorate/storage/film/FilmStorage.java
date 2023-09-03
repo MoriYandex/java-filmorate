@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.storage.film;
 
 import ru.yandex.practicum.filmorate.model.Film;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 
 public interface FilmStorage {
@@ -18,4 +19,14 @@ public interface FilmStorage {
     Film deleteLike(Integer id, Integer userId);
 
     List<Film> getMostPopular(Integer count);
+
+    List<Film> getFilmsByDirectorSortedByLikes(int directorId);
+
+    List<Film> getFilmsByDirectorSortedByYears(int directorId);
+
+    void addDirectorToFilm(int filmId, int directorId);
+
+    List<Film> findFilmsByDirector(String query);
+
+    List<Film> findFilmsByDirectorTitle(String query);
 }
