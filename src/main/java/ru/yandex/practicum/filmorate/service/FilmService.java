@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.RequestParam;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -75,6 +76,11 @@ public class FilmService {
         int filmCount = (count != null && count > 0) ? count : MOST_POPULAR_QUANTITY;
         log.info(String.format("FilmService: Вывод %d наиболее популярных фильмов", filmCount));
         return filmStorage.getMostPopular(filmCount);
+    }
+
+    public List<Film> getCommonFilms(Integer userId, Integer friendId) {
+        log.info(String.format("FilmService: Вывод общих фильмов пользователей %d и %d", userId, friendId));
+        return filmStorage.getCommonFilms(userId, friendId);
     }
 
     public void validateFilm(Film film) {
