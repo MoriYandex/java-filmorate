@@ -2,10 +2,15 @@ package ru.yandex.practicum.filmorate.tests;
 
 import lombok.AllArgsConstructor;
 import org.junit.jupiter.api.Test;
+import org.springframework.jdbc.core.JdbcTemplate;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Rating;
 import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.storage.film.DbFilmStorage;
+import ru.yandex.practicum.filmorate.storage.friendship.DbFriendshipStorage;
+import ru.yandex.practicum.filmorate.storage.genre.DbGenreStorage;
+import ru.yandex.practicum.filmorate.storage.user.DbUserStorage;
 import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
 
 import java.time.LocalDate;
@@ -20,7 +25,9 @@ class FilmControllerTests {
     private static final String VERY_LONG_DESCRIPTION = "Очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень-очень длинное описание";
     private static final String DESCRIPTION_200 = VERY_LONG_DESCRIPTION.substring(0, 200);
 
-    private final FilmService filmService = new FilmService(new InMemoryFilmStorage(), new InMemoryUserStorage());
+    private final FilmService filmService = new FilmService(
+        new DbFilmStorage(new JdbcTemplate(), new DbGenreStorage(new JdbcTemplate())),
+        new DbUserStorage(new JdbcTemplate(), new DbFriendshipStorage(new JdbcTemplate())));
 
     @Test
     void validateFilm() {
