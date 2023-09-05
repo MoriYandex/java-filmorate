@@ -28,7 +28,7 @@ public class FilmService {
     private final FeedService feedService;
 
 
-//    public FilmService(@Qualifier("DbFilmStorage")
+    //    public FilmService(@Qualifier("DbFilmStorage")
 //                       FilmStorage filmStorage, UserStorage userStorage) {
 //        this.filmStorage = filmStorage;
 //        this.userStorage = userStorage;
@@ -77,6 +77,9 @@ public class FilmService {
     }
 
     public Film deleteLike(Integer id, Integer userId) {
+        if (id < 0 || userId < 0) {
+            throw new NotFoundException("Пользователь не может быть с отрицательным id.");
+        }
         log.info(String.format("FilmService: Удаление лайка фильму %d пользователем %d", id, userId));
         User user = userStorage.getUser(userId);
 
