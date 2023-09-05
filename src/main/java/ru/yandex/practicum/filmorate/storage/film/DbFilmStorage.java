@@ -18,6 +18,7 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -115,6 +116,7 @@ public class DbFilmStorage implements FilmStorage {
         String sqlQuery003 = "INSERT INTO t003_likes (t001_id, t002_id) VALUES (?, ?)";
         jdbcTemplate.update(sqlQuery003, id, userId);
         film.getLikes().add(userId);
+        addToFeedAddLike(userId, id);
         log.info(String.format("Добавлен лайк фильму %d пользователем %d.", id, userId));
         return film;
     }
@@ -129,6 +131,7 @@ public class DbFilmStorage implements FilmStorage {
         String sqlQuery003 = "DELETE FROM t003_likes WHERE t001_id = ? AND t002_id = ?";
         jdbcTemplate.update(sqlQuery003, id, userId);
         film.getLikes().remove(userId);
+        addToFeedDeleteLike(userId, id);
         log.info(String.format("Удалён лайк фильму %d пользователем %d.", id, userId));
         return film;
     }
@@ -177,5 +180,19 @@ public class DbFilmStorage implements FilmStorage {
     private List<Like> getAllLikes() {
         String sqlQueryT003 = "SELECT * FROM t003_likes";
         return jdbcTemplate.query(sqlQueryT003, (rs, rowNum) -> mapRecordToLike(rs));
+    }
+
+    private void addToFeedAddLike(Integer userId, Integer filmId) {
+        String sql = "INSERT INTO t011_feeds (t011_user_id, t011_event_type, t011_operation," +
+                " t011_entity_id, t011_timestamp)" +
+                " VALUES (?, 'LIKE', 'ADD', ?, ?)";
+        jdbcTemplate.update(sql, userId, filmId, Date.from(Instant.now()));
+    }
+
+    private void addToFeedDeleteLike(Integer userId, Integer filmId) {
+        String sql = "INSERT INTO t011_feeds (t011_user_id, t011_event_type, t011_operation," +
+                " t011_entity_id, t011_timestamp)" +
+                " VALUES (?, 'LIKE', 'REMOVE', ?, ?)";
+        jdbcTemplate.update(sql, userId, filmId, Date.from(Instant.now()));
     }
 }
