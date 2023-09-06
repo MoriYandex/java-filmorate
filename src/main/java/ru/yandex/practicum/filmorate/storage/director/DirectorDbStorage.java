@@ -14,7 +14,10 @@ import ru.yandex.practicum.filmorate.model.Film;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Component
@@ -113,7 +116,7 @@ public class DirectorDbStorage implements DirectorStorage {
     @Override
     public void addDirector(Film film) {
         String addDirector = "INSERT INTO t007_links_t001_t008 (t001_id, t008_id) VALUES (?,?)";
-        Set<Director> directors = film.getDirectors();
+        List<Director> directors = film.getDirectors();
         for (Director director : directors) {
             if (!isDirectorExists(director.getId())) {
                 String insertDirector = "INSERT INTO t008_directors (t008_name) VALUES (?)";

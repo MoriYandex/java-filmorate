@@ -8,16 +8,11 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Like;
-import ru.yandex.practicum.filmorate.model.Rating;
+import ru.yandex.practicum.filmorate.model.*;
 import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 
 import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -36,7 +31,8 @@ public class DbFilmStorage implements FilmStorage {
 
     @Override
     public Film getFilm(Integer id) {
-        String query = "SELECT * FROM t001_films t001 LEFT JOIN t006_ratings t006 ON t006.t006_id = t001.t006_id WHERE t001.t001_id = ?";
+        String query = "SELECT * FROM t001_films t001 LEFT JOIN t006_ratings t006 ON t006.t006_id = t001.t006_id " +
+                "LEFT JOIN t008_directors t008 ON t008.t008_id = T001.T008_ID WHERE t001.t001_id = ?";
         List<Film> resultList = jdbcTemplate.query(query, (rs, rowNum) -> mapRecordToFilm(rs), id);
         Film film = resultList.stream().findFirst().orElse(null);
         if (film == null)
@@ -48,7 +44,8 @@ public class DbFilmStorage implements FilmStorage {
 
     @Override
     public List<Film> getAllFilms() {
-        String query = "SELECT * FROM t001_films t001 LEFT JOIN t006_ratings t006 ON t006.t006_id = t001.t006_id";
+        String query = "SELECT * FROM t001_films t001 LEFT JOIN t006_ratings t006 ON t006.t006_id = t001.t006_id " +
+                "LEFT JOIN t008_directors t008 ON t008.t008_id = T001.T008_ID";
         List<Film> resultList = jdbcTemplate.query(query, (rs, rowNum) -> mapRecordToFilm(rs));
         Map<Integer, List<Genre>> mapGenresToFilms = genreStorage.getMapOfGenresToFilms();
         List<Like> likeList = getAllLikes();
@@ -62,8 +59,10 @@ public class DbFilmStorage implements FilmStorage {
 
     @Override
     public Film addFilm(Film film) {
-        String sqlQueryT001 = "INSERT INTO t001_films (t001_name, t001_description, t001_release_date, t001_duration, t006_id) VALUES (?, ?, ?, ?, ?)";
+        String sqlQueryT001 = "INSERT INTO t001_films (t001_name, t001_description, t001_release_date, t001_duration, t006_id, t008_id) VALUES (?, ?, ?, ?, ?, ?)";
         String sqlQueryT007 = "INSERT INTO t007_links_t001_t005 (t001_id, t005_id) VALUES (?, ?)";
+
+
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
             PreparedStatement statement = connection.prepareStatement(sqlQueryT001, new String[]{"t001_id"});
@@ -72,6 +71,7 @@ public class DbFilmStorage implements FilmStorage {
             statement.setDate(3, Date.valueOf(film.getReleaseDate()));
             statement.setInt(4, film.getDuration());
             statement.setInt(5, film.getMpa().getId());
+            statement.setObject(6, film.getDirectors().isEmpty() ? null : film.getDirectors().get(0).getId(), Types.INTEGER);
             return statement;
         }, keyHolder);
         film.setId(keyHolder.getKey().intValue());
@@ -84,10 +84,11 @@ public class DbFilmStorage implements FilmStorage {
 
     @Override
     public Film updateFilm(Film film) {
+
         if (getFilm(film.getId()) == null) {
             throw new NotFoundException(String.format("Фильм %d не найден!", film.getId()));
         }
-        String sqlQueryT001 = "UPDATE t001_films SET t001_name = ?, t001_description = ?, t001_release_date = ?, t001_duration = ?, t006_id = ? WHERE t001_id = ?";
+        String sqlQueryT001 = "UPDATE t001_films SET t001_name = ?, t001_description = ?, t001_release_date = ?, t001_duration = ?, t006_id = ?, t008_id = ? WHERE t001_id = ?";
         String sqlQueryT007Clear = "DELETE FROM t007_links_t001_t005 WHERE t001_id = ?";
         String sqlQueryT007Insert = "INSERT INTO t007_links_t001_t005 (t001_id, t005_id) VALUES (?, ?)";
         jdbcTemplate.update(sqlQueryT001,
@@ -96,6 +97,7 @@ public class DbFilmStorage implements FilmStorage {
                 film.getReleaseDate(),
                 film.getDuration(),
                 film.getMpa().getId(),
+                film.getDirectors().isEmpty() ? null : film.getDirectors().get(0).getId(),
                 film.getId());
         jdbcTemplate.update(sqlQueryT007Clear, film.getId());
         film.setGenres(film.getGenres().stream().distinct().collect(Collectors.toList()));
@@ -151,7 +153,18 @@ public class DbFilmStorage implements FilmStorage {
             Integer ratingId = rs.getInt("t006_id");
             String ratingName = rs.getString("t006_code");
             String ratingDescription = rs.getString("t006_description");
-            return new Film(id, name, description, releaseDate, duration, new ArrayList<>(), new Rating(ratingId, ratingName, ratingDescription),new HashSet<>(), new HashSet<>());
+            Integer directorId = rs.getInt("t008_id");
+            String directorName = rs.getString("t008_name");
+            List<Director> directors = new ArrayList<>();
+            if (directorId != 0) {
+                Director director = Director.builder()
+                        .id(directorId)
+                        .name(directorName)
+                        .build();
+                directors.add(director);
+            }
+            return new Film(id, name, description, releaseDate, duration, new ArrayList<>(), new Rating(ratingId,
+                    ratingName, ratingDescription), new HashSet<>(), directors);
         } catch (SQLException e) {
             throw new ValidationException(String.format("Неверная строка записи о фильме! Сообщение: %s", e.getMessage()));
         }
