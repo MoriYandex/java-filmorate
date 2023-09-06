@@ -151,7 +151,7 @@ public class DbFilmStorage implements FilmStorage {
             Integer ratingId = rs.getInt("t006_id");
             String ratingName = rs.getString("t006_code");
             String ratingDescription = rs.getString("t006_description");
-            return new Film(id, name, description, releaseDate, duration, new ArrayList<>(), new Rating(ratingId, ratingName, ratingDescription), new HashSet<>());
+            return new Film(id, name, description, releaseDate, duration, new ArrayList<>(), new Rating(ratingId, ratingName, ratingDescription),new HashSet<>(), new HashSet<>());
         } catch (SQLException e) {
             throw new ValidationException(String.format("Неверная строка записи о фильме! Сообщение: %s", e.getMessage()));
         }
