@@ -82,27 +82,29 @@ public class DbReviewStorage implements ReviewStorage {
 
     @Override
     public Review getReview(Integer id) {
-        String sqlQueryT009 = "SELECT t009_id, t009_content, t009_is_positive, t002_id, t001_id " +
-            "FROM t009_reviews WHERE t009_id = ?";
+        String sqlQueryT009 = "SELECT r.t009_id, r.t009_content, r.t009_is_positive, r.t002_id, " +
+            "r.t001_id, rf.t010_value " +
+            "FROM t009_reviews r " +
+            "LEFT JOIN t010_review_feedbacks rf ON rf.t009_id = r.t009_id " +
+            "WHERE r.t009_id = ?";
 
         List<Review> resultList = jdbcTemplate.query(sqlQueryT009, (rs, rowNum) -> mapRecordToReview(rs), id);
         Review review = resultList.stream().findFirst().orElse(null);
         if (review == null) {
             throw new NotFoundException(String.format("Отзыв %d не найден!", id));
         }
-        review.setUseful(calculateUsefulness(id));
 
         return review;
     }
 
     @Override
     public List<Review> getAllReviews(Integer count) {
-        String sqlQueryT009 = "SELECT t009_id, t009_content, t009_is_positive, t002_id, t001_id " +
-            "FROM t009_reviews LIMIT ?";
+        String sqlQueryT009 = "SELECT r.t009_id, r.t009_content, r.t009_is_positive, r.t002_id, " +
+            "r.t001_id, rf.t010_value " +
+            "FROM t009_reviews r " +
+            "LEFT JOIN t010_review_feedbacks rf ON rf.t009_id = r.t009_id " +
+            "LIMIT ?";
         List<Review> resultList = jdbcTemplate.query(sqlQueryT009, (rs, rowNum) -> mapRecordToReview(rs), count);
-        for (Review review : resultList) {
-            review.setUseful(calculateUsefulness(review.getReviewId()));
-        }
 
         return resultList.stream()
             .sorted(Comparator.comparing(Review::getUseful).reversed())
@@ -111,12 +113,13 @@ public class DbReviewStorage implements ReviewStorage {
 
     @Override
     public List<Review> getAllReviewsByFilmId(Integer filmId, Integer count) {
-        String sqlQueryT009 = "SELECT t009_id, t009_content, t009_is_positive, t002_id, t001_id " +
-            "FROM t009_reviews WHERE t001_id = ? LIMIT ?";
+        String sqlQueryT009 = "SELECT r.t009_id, r.t009_content, r.t009_is_positive, r.t002_id, " +
+            "r.t001_id, rf.t010_value " +
+            "FROM t009_reviews r " +
+            "LEFT JOIN t010_review_feedbacks rf ON rf.t009_id = r.t009_id " +
+            "WHERE r.t001_id = ? " +
+            "LIMIT ?";
         List<Review> resultList = jdbcTemplate.query(sqlQueryT009, (rs, rowNum) -> mapRecordToReview(rs), filmId, count);
-        for (Review review : resultList) {
-            review.setUseful(calculateUsefulness(review.getReviewId()));
-        }
 
         return resultList.stream()
             .sorted(Comparator.comparing(Review::getUseful).reversed())
@@ -150,23 +153,11 @@ public class DbReviewStorage implements ReviewStorage {
             Boolean isPositive = rs.getBoolean("t009_is_positive");
             Integer userId = rs.getInt("t002_id");
             Integer filmId = rs.getInt("t001_id");
-            Integer useful = calculateUsefulness(id);
+            Integer useful = rs.getInt("t010_value");
             return new Review(id, content, isPositive, userId, filmId, useful);
         } catch (SQLException e) {
             throw new ValidationException(String.format("Неверная строка записи об отзыве! Сообщение: %s", e.getMessage()));
         }
-    }
-
-    private Integer calculateUsefulness(Integer reviewId) {
-        String sqlQueryT009 = "SELECT SUM(t010_value) FROM t010_review_feedbacks WHERE t009_id = ?";
-
-        Integer usefulness = jdbcTemplate.queryForObject(
-            sqlQueryT009,
-            Integer.class,
-            reviewId
-        );
-
-        return Objects.requireNonNullElse(usefulness, 0);
     }
 
     private void findFilm(Integer filmId) {
