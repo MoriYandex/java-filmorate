@@ -2,11 +2,9 @@ package ru.yandex.practicum.filmorate.storage.film;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
-import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
@@ -44,7 +42,6 @@ public class DbFilmStorage implements FilmStorage {
         film.setLikes(getLikesByFilmId(id));
         return film;
     }
-
     @Override
     public List<Film> getAllFilms() {
         String query = "SELECT * FROM t001_films t001 LEFT JOIN t006_ratings t006 ON t006.t006_id = t001.t006_id";
@@ -61,7 +58,7 @@ public class DbFilmStorage implements FilmStorage {
 
     @Override
     public Film addFilm(Film film) {
-        String sqlQueryT001 = "INSERT INTO t001_films (t001_name, t001_description, t001_release_date, t001_duration, t006_id,) VALUES (?, ?, ?, ?, ?)";
+        String sqlQueryT001 = "INSERT INTO t001_films (t001_name, t001_description, t001_release_date, t001_duration, t006_id) VALUES (?, ?, ?, ?, ?)";
         String sqlQueryT007 = "INSERT INTO t007_links_t001_t005 (t001_id, t005_id) VALUES (?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
@@ -86,7 +83,7 @@ public class DbFilmStorage implements FilmStorage {
         if (getFilm(film.getId()) == null) {
             throw new NotFoundException(String.format("Фильм %d не найден!", film.getId()));
         }
-        String sqlQueryT001 = "UPDATE t001_films SET t001_name = ?, t001_description = ?, t001_release_date = ?, t001_duration = ?, t006_id = ?, t008_id = ? WHERE t001_id = ?";
+        String sqlQueryT001 = "UPDATE t001_films SET t001_name = ?, t001_description = ?, t001_release_date = ?, t001_duration = ?, t006_id = ? WHERE t001_id = ?";
         String sqlQueryT007Clear = "DELETE FROM t007_links_t001_t005 WHERE t001_id = ?";
         String sqlQueryT007Insert = "INSERT INTO t007_links_t001_t005 (t001_id, t005_id) VALUES (?, ?)";
         jdbcTemplate.update(sqlQueryT001,
@@ -150,8 +147,7 @@ public class DbFilmStorage implements FilmStorage {
             Integer ratingId = rs.getInt("t006_id");
             String ratingName = rs.getString("t006_code");
             String ratingDescription = rs.getString("t006_description");
-            return new Film(id, name, description, releaseDate, duration, new ArrayList<>(),
-                    new Rating(ratingId, ratingName, ratingDescription), new HashSet<>(), new HashSet<>());
+            return new Film(id, name, description, releaseDate, duration, new ArrayList<>(), new Rating(ratingId, ratingName, ratingDescription), new HashSet<>(), new HashSet<>());
         } catch (SQLException e) {
             throw new ValidationException(String.format("Неверная строка записи о фильме! Сообщение: %s", e.getMessage()));
         }

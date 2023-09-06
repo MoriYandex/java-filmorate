@@ -65,7 +65,7 @@ public class DirectorDbStorage implements DirectorStorage {
     @Override
     public void deleteDirectorByFilm(int id) {
         if (isDirectorExists(id)) {
-            String deleteDirector = "DELETE FROM t007_t001_t008 WHERE t001_id = ?";
+            String deleteDirector = "DELETE FROM t007_links_t001_t008 WHERE t001_id = ?";
             jdbcTemplate.update(deleteDirector, id);
             log.info(String.format("Режиссёр с id %d удалён.", id));
         } else {
@@ -78,8 +78,7 @@ public class DirectorDbStorage implements DirectorStorage {
         String sqlQuery = "SELECT t008_id, t008_name FROM t008_directors WHERE t008_id = ?";
         try {
             return jdbcTemplate.queryForObject(sqlQuery, (rs, rowNum) -> makeDirector(rs), id);
-        } catch (NotFoundException e) {
-            log.error(String.format("Режиссёр с id %d не найден.", id));
+        } catch (RuntimeException e) {
             throw new NotFoundException(String.format("Режиссёр с id %d не найден", id));
         }
     }
@@ -94,10 +93,10 @@ public class DirectorDbStorage implements DirectorStorage {
     public void load(List<Film> films) {
         final Map<Integer, Film> filmById = films.stream().collect(Collectors.toMap(Film::getId, f -> f));
         String inSql = String.join(",", Collections.nCopies(films.size(), "?"));
-        final String sqlQuery = "SELECT t007_t001_t008.t001_id, t007_t001_t008.t008_id, t008_directors.t008_name " +
-                "FROM t007_t001_t008 " +
-                "JOIN t008_directors ON t007_t001_t008.t008_id = t008_directors.t008_id " +
-                "WHERE t007_t001_t008.t001_id IN (" + inSql + ")";
+        final String sqlQuery = "SELECT t007_links_t001_t008.t001_id, t007_links_t001_t008.t008_id, t008_directors.t008_name " +
+                "FROM t007_links_t001_t008 " +
+                "JOIN t008_directors ON t007_links_t001_t008.t008_id = t008_directors.t008_id " +
+                "WHERE t007_links_t001_t008.t001_id IN (" + inSql + ")";
         jdbcTemplate.query(sqlQuery, (rs) -> {
             Film film = filmById.get(rs.getInt("t001_id"));
             film.addDirector(makeDirector(rs));
@@ -113,7 +112,7 @@ public class DirectorDbStorage implements DirectorStorage {
 
     @Override
     public void addDirector(Film film) {
-        String addDirector = "INSERT INTO t007_t001_t008 (t001_id, t008_id) VALUES (?,?)";
+        String addDirector = "INSERT INTO t007_links_t001_t008 (t001_id, t008_id) VALUES (?,?)";
         Set<Director> directors = film.getDirectors();
         for (Director director : directors) {
             if (!isDirectorExists(director.getId())) {
