@@ -3,6 +3,8 @@ package ru.yandex.practicum.filmorate.storage.film;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
@@ -136,11 +138,28 @@ public class DbFilmStorage implements FilmStorage {
     }
 
     @Override
-    public List<Film> getMostPopular(Integer count) {
-        return getAllFilms()
-                .stream().sorted(Comparator.comparing(Film::getLikesCount).reversed())
-                .limit(count)
-                .collect(Collectors.toList());
+    public List<Film> getMostPopular(Integer count, Integer genreId, Integer year) {
+        String sqlQuery = setQueryWithCount();
+
+        if (genreId == null && year != null) {
+            sqlQuery = changeQueryIfYearExists();
+        }
+
+        if (genreId != null && year == null) {
+            sqlQuery = changeQueryIfGenreExists();
+        }
+
+        if (genreId != null && year != null) {
+            sqlQuery = changeQueryIfGenreAndYearExist();
+        }
+
+        NamedParameterJdbcTemplate namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
+        MapSqlParameterSource paramSource = new MapSqlParameterSource()
+            .addValue("count", count)
+            .addValue("genreId", genreId)
+            .addValue("year", year);
+
+        return namedParameterJdbcTemplate.query(sqlQuery, paramSource, (rs, rowNum) -> mapRecordToFilm(rs));
     }
 
     private Film mapRecordToFilm(ResultSet rs) {
@@ -163,11 +182,90 @@ public class DbFilmStorage implements FilmStorage {
                         .build();
                 directors.add(director);
             }
-            return new Film(id, name, description, releaseDate, duration, new ArrayList<>(), new Rating(ratingId,
+            return new Film(id, name, description, releaseDate, duration, getAllFilmGenres(rs), new Rating(ratingId,
                     ratingName, ratingDescription), new HashSet<>(), directors);
         } catch (SQLException e) {
             throw new ValidationException(String.format("Неверная строка записи о фильме! Сообщение: %s", e.getMessage()));
         }
+    }
+
+    private ArrayList<Genre> getAllFilmGenres(ResultSet resultSet) throws SQLException {
+        String sqlQueryGenre = "SELECT g.t005_id, g.t005_name " +
+            "FROM t007_links_t001_t005 as fg " +
+            "INNER JOIN t005_genres g on fg.t005_id = g.t005_id " +
+            "WHERE fg.t001_id = ?";
+
+        HashSet<Genre> genres = jdbcTemplate.query(
+            sqlQueryGenre,
+            this::getFilmGenre,
+            resultSet.getInt("t001_id")
+        );
+
+        return new ArrayList<>(genres);
+    }
+
+    private HashSet<Genre> getFilmGenre(ResultSet resultSet) throws SQLException {
+        HashSet<Genre> genres = new HashSet<>();
+
+        while (resultSet.next()) {
+            Integer genreId = resultSet.getInt("t005_id");
+            String genreName = resultSet.getString("t005_name");
+            genres.add(new Genre(genreId, genreName));
+        }
+
+        return genres;
+    }
+
+    private String setQueryWithCount() {
+        return "SELECT f.t001_id, f.t001_name, f.t001_description, f.t001_release_date,  f.t001_duration, " +
+            "f.t006_id, r.t006_code, r.t006_description " +
+            "FROM t001_films f " +
+            "LEFT JOIN t006_ratings r ON f.t006_id = r.t006_id " +
+            "LEFT JOIN t003_likes l on f.t001_id  = l.t001_id " +
+            "GROUP BY f.t001_id, t001_id " +
+            "ORDER BY COUNT(l.t002_id) DESC " +
+            "LIMIT :count";
+    }
+
+    private String changeQueryIfGenreExists() {
+        return "SELECT f.t001_id, f.t001_name, f.t001_description, f.t001_release_date,  f.t001_duration, " +
+            "f.t006_id, r.t006_code, r.t006_description, g.t005_id, f.t008_id, d.t008_name " +
+            "FROM t001_films f " +
+            "LEFT JOIN t006_ratings r ON f.t006_id = r.t006_id " +
+            "LEFT JOIN t003_likes l on f.t001_id  = l.t001_id " +
+            "LEFT JOIN t007_links_t001_t005 g on f.t001_id = g.t001_id " +
+            "LEFT JOIN t008_directors d ON f.t008_id = d.t008_id " +
+            "WHERE g.t005_id = :genreId " +
+            "GROUP BY f.t001_id, l.t002_id " +
+            "ORDER BY COUNT(l.t002_id) DESC " +
+            "LIMIT :count";
+    }
+
+    private String changeQueryIfYearExists() {
+        return "SELECT f.t001_id, f.t001_name, f.t001_description, f.t001_release_date,  f.t001_duration, " +
+            "f.t006_id, r.t006_code, r.t006_description, f.t008_id, d.t008_name  " +
+            "FROM t001_films f " +
+            "LEFT JOIN t006_ratings r ON f.t006_id = r.t006_id " +
+            "LEFT JOIN t003_likes l on f.t001_id  = l.t001_id " +
+            "LEFT JOIN t008_directors d ON f.t008_id = d.t008_id " +
+            "WHERE EXTRACT(YEAR FROM t001_release_date) = :year " +
+            "GROUP BY f.t001_id, l.t002_id " +
+            "ORDER BY COUNT(l.t002_id) DESC " +
+            "LIMIT :count";
+    }
+
+    private String changeQueryIfGenreAndYearExist() {
+        return "SELECT f.t001_id, f.t001_name, f.t001_description, f.t001_release_date,  f.t001_duration, " +
+            "f.t006_id, r.t006_code, r.t006_description, g.t005_id, f.t008_id, d.t008_name   " +
+            "FROM t001_films f " +
+            "LEFT JOIN t006_ratings r ON f.t006_id = r.t006_id " +
+            "LEFT JOIN t003_likes l on f.t001_id  = l.t001_id " +
+            "LEFT JOIN t007_links_t001_t005 g on f.t001_id = g.t001_id " +
+            "LEFT JOIN t008_directors d ON f.t008_id = d.t008_id " +
+            "WHERE g.t005_id = :genreId AND EXTRACT(YEAR FROM t001_release_date) = :year " +
+            "GROUP BY f.t001_id, l.t002_id " +
+            "ORDER BY COUNT(l.t002_id) DESC " +
+            "LIMIT :count";
     }
 
     private Set<Integer> getLikesByFilmId(Integer id) {

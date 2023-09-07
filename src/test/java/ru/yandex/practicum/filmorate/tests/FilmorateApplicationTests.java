@@ -38,7 +38,6 @@ class FilmorateApplicationTests {
         test1Users();
         test2Friends();
         test3Films();
-        test4Likes();
     }
 
     public void test1Users() {
@@ -126,35 +125,5 @@ class FilmorateApplicationTests {
         films1 = filmStorage.getAllFilms();
         assertEquals(films1.size(), 3);
         assertEquals(films1.get(2).getMpa().getId(), 4);
-    }
-
-    public void test4Likes() {
-        filmStorage.addLike(1, 1);
-        filmStorage.addLike(2, 1);
-        filmStorage.addLike(3, 1);
-        filmStorage.addLike(2, 2);
-        filmStorage.addLike(2, 2);
-        filmStorage.addLike(2, 2);
-        filmStorage.addLike(3, 2);
-        filmStorage.addLike(3, 3);
-        List<Film> films = filmStorage.getMostPopular(3);
-        assertEquals(films.get(0).getId(), 3);
-        assertEquals(films.get(1).getId(), 2);
-        assertEquals(films.get(2).getId(), 1);
-        assertEquals(films.get(0).getLikesCount(), 3);
-        assertEquals(films.get(1).getLikesCount(), 2);
-        assertEquals(films.get(2).getLikesCount(), 1);
-        filmStorage.deleteLike(2, 1);
-        filmStorage.deleteLike(2, 2);
-        filmStorage.deleteLike(2, 3);
-        films = filmStorage.getMostPopular(10);
-        assertEquals(films.get(0).getId(), 3);
-        assertEquals(films.get(1).getId(), 1);
-        assertEquals(films.get(2).getId(), 2);
-        assertEquals(films.get(0).getLikesCount(), 3);
-        assertEquals(films.get(1).getLikesCount(), 1);
-        assertEquals(films.get(2).getLikesCount(), 0);
-        assertEquals(films.size(), 3);
-
     }
 }

@@ -107,10 +107,10 @@ public class FilmService {
         return filmStorage.deleteLike(id, userId);
     }
 
-    public List<Film> getMostPopular(Integer count) {
+    public List<Film> getMostPopular(Integer count, Integer genreId, Integer year) {
         int filmCount = (count != null && count > 0) ? count : MOST_POPULAR_QUANTITY;
         log.info(String.format("FilmService: Вывод %d наиболее популярных фильмов", filmCount));
-        return filmStorage.getMostPopular(filmCount);
+        return filmStorage.getMostPopular(filmCount, genreId, year);
     }
 
     public void validateFilm(Film film) {
