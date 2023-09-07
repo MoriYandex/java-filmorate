@@ -153,6 +153,24 @@ public class DbFilmStorage implements FilmStorage {
         return film;
     }
 
+    @Override
+    public List<Film> getCommonFilms(Integer userId, Integer friendId) {
+        String sqlCommonFilms = "SELECT f.t001_id FROM t003_likes AS l1 " +
+            "LEFT JOIN t001_films AS f ON f.t001_id = l1.t001_id " +
+            "LEFT JOIN t003_likes AS l2 ON l1.t001_id = l2.t001_id " +
+            "WHERE l1.t002_id = ? AND l2.t002_id = ? AND l1.t001_id = l2.t001_id";
+        List<Film> resultList = jdbcTemplate.query(
+            sqlCommonFilms,
+            (rs, rowNum) -> getFilm(rs.getInt("t001_id")),
+            userId,
+            friendId
+        );
+
+        return resultList.stream()
+            .sorted(Comparator.comparing(Film::getLikesCount).reversed())
+            .collect(Collectors.toList());
+    }
+
     private Film mapRecordToFilm(ResultSet rs) {
         try {
             Integer id = rs.getInt("t001_id");

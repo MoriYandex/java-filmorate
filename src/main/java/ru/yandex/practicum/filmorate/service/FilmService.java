@@ -85,6 +85,11 @@ public class FilmService {
         return filmStorage.getMostPopular(filmCount);
     }
 
+    public List<Film> getCommonFilms(Integer userId, Integer friendId) {
+        log.info(String.format("FilmService: Вывод общих фильмов пользователей %d и %d", userId, friendId));
+        return filmStorage.getCommonFilms(userId, friendId);
+    }
+
     public void validateFilm(Film film) {
         if (!StringUtils.hasText(film.getName())) {
             String emptyNameMessage = "Название не должно быть пустым!";
