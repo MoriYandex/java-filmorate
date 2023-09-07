@@ -190,4 +190,11 @@ public class DbFilmStorage implements FilmStorage {
         String sqlQueryT003 = "SELECT * FROM t003_likes";
         return jdbcTemplate.query(sqlQueryT003, (rs, rowNum) -> mapRecordToLike(rs));
     }
+
+    @Override
+    public Set<Integer> getAllUserLikesById(Integer id) {
+        String sqlQueryT003 = "SELECT t001_id FROM t003_likes WHERE t002_id = ?";
+        List<Integer> resultList = jdbcTemplate.query(sqlQueryT003, (rs, rowNum) -> rs.getInt("t001_id"), id);
+        return new HashSet<>(resultList);
+    }
 }

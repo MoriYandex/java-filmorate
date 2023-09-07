@@ -13,7 +13,10 @@ import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @Slf4j
@@ -105,5 +108,70 @@ public class FilmService {
             log.error(negativeDurationMessage);
             throw new ValidationException(negativeDurationMessage);
         }
+    }
+
+    private List<User> getUsersMaxIntersectionByLikes(Integer id) {
+
+        Set<Integer> userLikes = filmStorage.getAllUserLikesById(id);
+
+        List<User> allUsers = userStorage.getAllUsers();
+
+        List<User> usersForReturn = new ArrayList<>();
+
+        int maxIntersection = 0;
+
+        for (User other : allUsers) {
+
+            Set<Integer> intersection = userLikes;
+
+            intersection.retainAll(filmStorage.getAllUserLikesById(other.getId()));
+
+            if (intersection.size() > maxIntersection) {
+
+                maxIntersection = intersection.size();
+
+                usersForReturn.clear();
+                usersForReturn.add(other);
+
+            } else if (intersection.size() == maxIntersection) {
+                usersForReturn.add(other);
+            }
+
+        }
+        return usersForReturn;
+    }
+
+    private Set<Integer> getDifference(User user1, User user2) {
+
+        Set<Integer> difForRet = filmStorage.getAllUserLikesById(user2.getId());
+        difForRet.removeAll(filmStorage.getAllUserLikesById(user1.getId()));
+
+        return difForRet;
+    }
+
+    public List<Film> getRecommendFilms(Integer idOfUser) {
+
+        User user = userStorage.getUser(idOfUser);
+        if (user != null) {
+
+            Set<Integer> idOfReturnFilms = new HashSet<>();
+
+            List<User> intersectionByLikeUsers = getUsersMaxIntersectionByLikes(user.getId());
+
+
+            for (User u : intersectionByLikeUsers) {
+                idOfReturnFilms.addAll(getDifference(user, u));
+            }
+            List<Film> allFilms = filmStorage.getAllFilms();
+            List<Film> filmsForRet = new ArrayList<>();
+
+            for (Film f : allFilms) {
+                if (idOfReturnFilms.contains(f.getId())) {
+                    filmsForRet.add(f);
+                }
+            }
+            return filmsForRet;
+        }
+        return new ArrayList<>();
     }
 }
