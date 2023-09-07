@@ -2,6 +2,8 @@ package ru.yandex.practicum.filmorate.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
@@ -18,6 +20,9 @@ public class DirectorService {
     }
 
     public Director createDirector(Director director) {
+        if(director.getName().isBlank()){
+            throw new ValidationException(String.format("Имя режиссера не дожно быть пустым"));
+        }
         return directorStorage.createDirector(director);
     }
 
@@ -30,7 +35,11 @@ public class DirectorService {
     }
 
     public Director getDirectorById(int id) {
-        return directorStorage.getDirectorById(id);
+        Director director = directorStorage.getDirectorById(id);
+        if(director == null){
+            throw new NotFoundException(String.format("Режиссер с id %s не найден", id));
+        }
+        return director;
     }
 
     public List<Director> getListAllDirectors() {
