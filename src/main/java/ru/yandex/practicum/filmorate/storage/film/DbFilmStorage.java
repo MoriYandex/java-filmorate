@@ -141,23 +141,25 @@ public class DbFilmStorage implements FilmStorage {
     public List<Film> getMostPopular(Integer count, Integer genreId, Integer year) {
         String sqlQuery = setQueryWithCount();
 
+        MapSqlParameterSource paramSource = new MapSqlParameterSource()
+            .addValue("count", count);
         if (genreId == null && year != null) {
             sqlQuery = changeQueryIfYearExists();
+            paramSource.addValue("year", year);
         }
 
         if (genreId != null && year == null) {
             sqlQuery = changeQueryIfGenreExists();
+            paramSource.addValue("genreId", genreId);
         }
 
         if (genreId != null && year != null) {
             sqlQuery = changeQueryIfGenreAndYearExist();
+            paramSource.addValue("year", year);
+            paramSource.addValue("genreId", genreId);
         }
 
         NamedParameterJdbcTemplate namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
-        MapSqlParameterSource paramSource = new MapSqlParameterSource()
-            .addValue("count", count)
-            .addValue("genreId", genreId)
-            .addValue("year", year);
 
         return namedParameterJdbcTemplate.query(sqlQuery, paramSource, (rs, rowNum) -> mapRecordToFilm(rs));
     }
@@ -218,11 +220,12 @@ public class DbFilmStorage implements FilmStorage {
 
     private String setQueryWithCount() {
         return "SELECT f.t001_id, f.t001_name, f.t001_description, f.t001_release_date,  f.t001_duration, " +
-            "f.t006_id, r.t006_code, r.t006_description " +
+            "f.t006_id, r.t006_code, r.t006_description, f.t008_id, d.t008_name " +
             "FROM t001_films f " +
             "LEFT JOIN t006_ratings r ON f.t006_id = r.t006_id " +
             "LEFT JOIN t003_likes l on f.t001_id  = l.t001_id " +
-            "GROUP BY f.t001_id, t001_id " +
+            "LEFT JOIN t008_directors d ON f.t008_id = d.t008_id " +
+            "GROUP BY f.t001_id " +
             "ORDER BY COUNT(l.t002_id) DESC " +
             "LIMIT :count";
     }
