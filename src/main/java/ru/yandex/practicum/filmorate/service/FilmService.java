@@ -55,6 +55,11 @@ public class FilmService {
         return filmStorage.updateFilm(film);
     }
 
+    public Film deleteFilm(Integer id) {
+        log.info("FilmService: Удаление фильма");
+        return filmStorage.delete(id);
+    }
+
     public Film addLike(Integer id, Integer userId) {
         log.info(String.format("FilmService: Добавление лайка фильму %d пользователем %d", id, userId));
         User user = userStorage.getUser(userId);

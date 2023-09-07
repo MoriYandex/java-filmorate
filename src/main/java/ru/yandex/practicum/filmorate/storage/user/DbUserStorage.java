@@ -145,6 +145,17 @@ public class DbUserStorage implements UserStorage {
         return getUsersByIds(friendIds);
     }
 
+    @Override
+    public User delete(Integer id) {
+        User user = getUser(id);
+        if (user == null) {
+            throw new NotFoundException(String.format("Пользователя с id %d не существует.", id));
+        }
+        String query = "DELETE FROM t002_users WHERE t002_id = ?";
+        jdbcTemplate.update(query, id);
+        return user;
+    }
+
     private User mapRecordToUser(ResultSet rs) {
         try {
             Integer id = rs.getInt("t002_id");

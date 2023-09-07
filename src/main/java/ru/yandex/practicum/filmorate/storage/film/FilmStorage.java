@@ -18,4 +18,6 @@ public interface FilmStorage {
     Film deleteLike(Integer id, Integer userId);
 
     List<Film> getMostPopular(Integer count);
+
+    Film delete(Integer id);
 }

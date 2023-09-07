@@ -20,4 +20,6 @@ public interface UserStorage {
     List<User> getAllFriends(Integer id);
 
     List<User> getCommonFriends(Integer id, Integer otherId);
+
+    User delete(Integer id);
 }

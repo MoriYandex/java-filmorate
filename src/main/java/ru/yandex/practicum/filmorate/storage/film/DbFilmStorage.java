@@ -141,6 +141,18 @@ public class DbFilmStorage implements FilmStorage {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public Film delete(Integer id) {
+        Film film = getFilm(id);
+        if (film == null) {
+            throw new NotFoundException(String.format("Фильма с id %d не существует", id));
+        }
+        String query = "DELETE FROM t001_films WHERE t001_id = ?";
+        jdbcTemplate.update(query, id);
+        log.info("Фильм {} был успешно удалён!", film);
+        return film;
+    }
+
     private Film mapRecordToFilm(ResultSet rs) {
         try {
             Integer id = rs.getInt("t001_id");
