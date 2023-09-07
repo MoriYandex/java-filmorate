@@ -101,7 +101,7 @@ class FilmorateApplicationTests {
                 100,
                 genres,
                 ratingStorage.getRating(2),
-                new HashSet<>());
+                new HashSet<>(), new ArrayList<>());
         film1 = filmStorage.addFilm(film1);
         List<Film> films1 = filmStorage.getAllFilms();
         assertEquals(films1.size(), 1);
