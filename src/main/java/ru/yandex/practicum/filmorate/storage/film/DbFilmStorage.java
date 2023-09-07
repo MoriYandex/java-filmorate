@@ -13,7 +13,6 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.*;
 import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 
-import java.sql.Date;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.*;
@@ -63,8 +62,6 @@ public class DbFilmStorage implements FilmStorage {
     public Film addFilm(Film film) {
         String sqlQueryT001 = "INSERT INTO t001_films (t001_name, t001_description, t001_release_date, t001_duration, t006_id, t008_id) VALUES (?, ?, ?, ?, ?, ?)";
         String sqlQueryT007 = "INSERT INTO t007_links_t001_t005 (t001_id, t005_id) VALUES (?, ?)";
-
-
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
             PreparedStatement statement = connection.prepareStatement(sqlQueryT001, new String[]{"t001_id"});
@@ -86,7 +83,6 @@ public class DbFilmStorage implements FilmStorage {
 
     @Override
     public Film updateFilm(Film film) {
-
         if (getFilm(film.getId()) == null) {
             throw new NotFoundException(String.format("Фильм %d не найден!", film.getId()));
         }
@@ -214,7 +210,7 @@ public class DbFilmStorage implements FilmStorage {
                         .build();
                 directors.add(director);
             }
-            return new Film(id, name, description, releaseDate, duration, getAllFilmGenres(rs), new Rating(ratingId,
+            return new Film(id, name, description, releaseDate, duration, new ArrayList<>(), new Rating(ratingId,
                     ratingName, ratingDescription), new HashSet<>(), directors);
         } catch (SQLException e) {
             throw new ValidationException(String.format("Неверная строка записи о фильме! Сообщение: %s", e.getMessage()));

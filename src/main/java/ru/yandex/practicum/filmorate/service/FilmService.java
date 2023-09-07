@@ -17,7 +17,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -214,5 +213,36 @@ public class FilmService {
             return filmsForRet;
         }
         return new ArrayList<>();
+    }
+
+    public List<Film> searchFilm(String query, String by) {
+
+        List<Film> allFilms = filmStorage.getAllFilms();
+
+        List<Film> forRet = new ArrayList<>();
+
+        if (by.contains("title") && !by.contains("director")) {
+
+            forRet = allFilms.stream()
+                    .filter(p1 -> p1.getName().toLowerCase().contains(query.toLowerCase()))
+                    .sorted(Comparator.comparing(Film::getLikesCount).reversed())
+                    .collect(Collectors.toList());
+
+        } else if (!by.contains("title") && by.contains("director")) {
+
+            forRet = allFilms.stream()
+                    .filter(p1 -> !p1.getDirectors().isEmpty() && p1.getDirectors().get(0).getName()
+                            .toLowerCase().contains(query.toLowerCase()))
+                    .sorted(Comparator.comparing(Film::getLikesCount).reversed())
+                    .collect(Collectors.toList());
+
+        } else if (by.contains("title") && by.contains("director")) {
+
+            forRet = allFilms.stream()
+                    .filter(f -> (((!f.getDirectors().isEmpty()) && (f.getDirectors().get(0).getName().toLowerCase().contains(query.toLowerCase()))) || f.getName().toLowerCase().contains(query.toLowerCase())))
+                    .sorted(Comparator.comparing(Film::getLikesCount).reversed())
+                    .collect(Collectors.toList());
+        }
+        return forRet;
     }
 }
