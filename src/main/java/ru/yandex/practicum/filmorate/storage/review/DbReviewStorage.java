@@ -14,9 +14,8 @@ import ru.yandex.practicum.filmorate.model.Review;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.time.Instant;
 import java.util.stream.Collectors;
 
 @Component
@@ -43,7 +42,7 @@ public class DbReviewStorage implements ReviewStorage {
         }, keyHolder);
         review.setReviewId(Objects.requireNonNull(keyHolder.getKey()).intValue());
         review.setUseful(0);
-
+        addToFeedReviewCreate(review.getReviewId(), review.getUserId());
         return getReview(review.getReviewId());
     }
 
@@ -54,8 +53,8 @@ public class DbReviewStorage implements ReviewStorage {
         }
 
         String sqlQueryT009 = "UPDATE t009_reviews " +
-            "SET t009_content = ?, t009_is_positive = ? " +
-            "WHERE t009_id = ?";
+                "SET t009_content = ?, t009_is_positive = ? " +
+                "WHERE t009_id = ?";
         jdbcTemplate.update(sqlQueryT009,
             review.getContent(),
             review.getIsPositive(),
@@ -63,7 +62,7 @@ public class DbReviewStorage implements ReviewStorage {
         );
 
         log.info(String.format("Отзыв %d успешно изменён.", review.getReviewId()));
-
+        addToFeedReviewUpdate(review.getReviewId());
         return getReview(review.getReviewId());
     }
 
@@ -77,6 +76,7 @@ public class DbReviewStorage implements ReviewStorage {
         jdbcTemplate.update(sqlQueryDeleteReviewFeedbacks, id);
 
         String sqlQueryDeleteReview = "delete from t009_reviews where t009_id = ?";
+        addToFeedReviewDelete(id, getReview(id).getUserId());
         return jdbcTemplate.update(sqlQueryDeleteReview, id) > 0;
     }
 
@@ -87,13 +87,11 @@ public class DbReviewStorage implements ReviewStorage {
             "FROM t009_reviews r " +
             "LEFT JOIN t010_review_feedbacks rf ON rf.t009_id = r.t009_id " +
             "WHERE r.t009_id = ?";
-
         List<Review> resultList = jdbcTemplate.query(sqlQueryT009, (rs, rowNum) -> mapRecordToReview(rs), id);
         Review review = resultList.stream().findFirst().orElse(null);
         if (review == null) {
             throw new NotFoundException(String.format("Отзыв %d не найден!", id));
         }
-
         return review;
     }
 
@@ -181,7 +179,7 @@ public class DbReviewStorage implements ReviewStorage {
         SqlRowSet rowSetUser = jdbcTemplate.queryForRowSet(sqlQuery010, id, userId);
         if (!rowSetUser.next()) {
             throw new NotFoundException(String.format(
-                "Лайк/дизлайк отзыву %d от пользователя %d не найден!",
+                    "Лайк/дизлайк отзыву %d от пользователя %d не найден!",
                 id,
                 userId)
             );
@@ -228,5 +226,26 @@ public class DbReviewStorage implements ReviewStorage {
         jdbcTemplate.update(sqlQuery010, id, userId);
         review.setUseful(review.getUseful() - value);
         log.info(String.format("Удален лайк/дизлайк отзыву %d пользователем %d.", id, userId));
+    }
+    private void addToFeedReviewUpdate(Integer reviewId) {
+        String sqlQuery = "INSERT INTO t011_feeds (t011_user_id, t011_event_type, t011_operation," +
+                " t011_entity_id, t011_timestamp) " +
+                "VALUES (?, 'REVIEW', 'UPDATE', ?,?)";
+        jdbcTemplate.update(sqlQuery, getReview(reviewId).getUserId(),
+                reviewId, Date.from(Instant.now()));
+    }
+
+    private void addToFeedReviewCreate(Integer reviewId, Integer userId) {
+        String sql = "INSERT INTO t011_feeds (t011_user_id, t011_event_type, t011_operation," +
+                " t011_entity_id, t011_timestamp) " +
+                "VALUES (?, 'REVIEW', 'ADD', ?,?)";
+        jdbcTemplate.update(sql, userId, reviewId, Date.from(Instant.now()));
+    }
+
+    private void addToFeedReviewDelete(Integer reviewId, Integer userId) {
+        String sqlQuery = "INSERT INTO t011_feeds (t011_user_id, t011_event_type, t011_operation," +
+                " t011_entity_id, t011_timestamp)" +
+                " VALUES (?, 'REVIEW', 'REMOVE', ?,?)";
+        jdbcTemplate.update(sqlQuery, userId, reviewId, Date.from(Instant.now()));
     }
 }

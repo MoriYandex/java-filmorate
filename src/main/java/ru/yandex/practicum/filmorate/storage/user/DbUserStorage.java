@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.storage.user;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -10,19 +11,21 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Friendship;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.Feed;
 import ru.yandex.practicum.filmorate.storage.friendship.FriendshipStorage;
 
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
-@Qualifier("DbUserStorage")
+@Primary
 @Slf4j
 public class DbUserStorage implements UserStorage {
     private final JdbcTemplate jdbcTemplate;
@@ -104,6 +107,7 @@ public class DbUserStorage implements UserStorage {
             friendshipStorage.updateFriendship(counterFriendship);
         }
         targetUser.getFriends().add(friendId);
+        addToFeedAddFriend(id, friendId);
         return targetUser;
     }
 
@@ -130,6 +134,7 @@ public class DbUserStorage implements UserStorage {
             }
         }
         targetUser.getFriends().remove(friendId);
+        addToFeedDeleteFriend(id, friendId);
         return targetUser;
     }
 
@@ -156,6 +161,12 @@ public class DbUserStorage implements UserStorage {
         return user;
     }
 
+    @Override
+    public List<Feed> getUserFeed(Integer id) {
+        String sqlQuery = "SELECT * FROM t011_feeds WHERE t011_user_id = ?";
+        return jdbcTemplate.query(sqlQuery, this::makeFeed, id);
+    }
+
     private User mapRecordToUser(ResultSet rs) {
         try {
             Integer id = rs.getInt("t002_id");
@@ -167,6 +178,29 @@ public class DbUserStorage implements UserStorage {
         } catch (SQLException e) {
             throw new ValidationException(String.format("Неверная строка записи о пользователе! Сообщение: %s", e.getMessage()));
         }
+    }
+
+    private Feed makeFeed(ResultSet rs, int rowNum) throws SQLException {
+        return Feed.builder()
+                .userId(rs.getInt("t011_user_id"))
+                .eventType(rs.getString("t011_event_type"))
+                .operation(rs.getString("t011_operation"))
+                .eventId(rs.getInt("t011_event_id"))
+                .entityId(rs.getInt("t011_entity_id"))
+                .timestamp(rs.getTimestamp("t011_timestamp"))
+                .build();
+    }
+
+    private void addToFeedAddFriend(Integer userId, Integer friendId) {
+        String sql = "INSERT INTO t011_feeds (t011_user_id, t011_event_type, t011_operation, t011_entity_id, t011_timestamp)" +
+                " VALUES (?, 'FRIEND', 'ADD', ?, ?)";
+        jdbcTemplate.update(sql, userId, friendId, Date.from(Instant.now()));
+    }
+
+    private void addToFeedDeleteFriend(Integer userId, Integer friendId) {
+        String sql = "INSERT INTO t011_feeds (t011_user_id, t011_event_type, t011_operation, t011_entity_id, t011_timestamp) " +
+                "VALUES (?, 'FRIEND', 'REMOVE', ?, ?)";
+        jdbcTemplate.update(sql, userId, friendId, Date.from(Instant.now()));
     }
 
     private List<User> getUsersByIds(List<Integer> ids) {

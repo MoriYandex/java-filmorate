@@ -1,7 +1,7 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
@@ -28,7 +28,6 @@ public class FilmService {
     private static final LocalDate MIN_RELEASE_DATE = LocalDate.of(1895, 12, 28);
     private static final int MOST_POPULAR_QUANTITY = 10;
     private final FilmStorage filmStorage;
-
     private final UserStorage userStorage;
 
     private final DirectorStorage directorDbStorage;
@@ -107,6 +106,9 @@ public class FilmService {
     }
 
     public Film deleteLike(Integer id, Integer userId) {
+        if (id < 0 || userId < 0) {
+            throw new NotFoundException("Пользователь не может быть с отрицательным id.");
+        }
         log.info(String.format("FilmService: Удаление лайка фильму %d пользователем %d", id, userId));
         User user = userStorage.getUser(userId);
         if (user == null)

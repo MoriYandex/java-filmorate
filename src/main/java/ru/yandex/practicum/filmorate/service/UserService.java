@@ -1,12 +1,13 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.Feed;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
@@ -17,8 +18,8 @@ import java.util.List;
 public class UserService {
     private final UserStorage userStorage;
 
-    public UserService(@Qualifier("DbUserStorage")
-                       UserStorage userStorage) {
+    @Autowired
+    public UserService(UserStorage userStorage) {
         this.userStorage = userStorage;
     }
 
@@ -54,11 +55,17 @@ public class UserService {
 
     public User addFriend(Integer id, Integer friendId) {
         log.info(String.format("UserService: Добавление пользователем %d друга %d", id, friendId));
+        if (id < 0 || friendId < 0) {
+            throw new NotFoundException("Идентификаторы не могут быть отрицательными.");
+        }
         return userStorage.addFriend(id, friendId);
     }
 
     public User deleteFriend(Integer id, Integer friendId) {
         log.info(String.format("UserService: Удаление пользователем %d друга %d", id, friendId));
+        if (id < 0 || friendId < 0) {
+            throw new ValidationException("Идентификаторы не могут быть отрицательными.");
+        }
         return userStorage.deleteFriend(id, friendId);
     }
 
@@ -72,8 +79,20 @@ public class UserService {
     }
 
     public List<User> getCommonFriends(Integer id, Integer otherId) {
+        if (id < 0 || otherId < 0) {
+            throw new ValidationException("Идентификаторы не могут быть отрицательными.");
+        }
         log.info(String.format("UserService: Получение списка друзей пользователя %d, общих с пользователем %d", id, otherId));
         return userStorage.getCommonFriends(id, otherId);
+    }
+
+    public List<Feed> getUserFeed(Integer userId) {
+        if (isExist(userId)) {
+            log.info("Новостная лента пользователя: {} {}", userStorage.getUser(userId).getName(), userStorage.getUserFeed(userId));
+            return userStorage.getUserFeed(userId);
+        } else {
+            throw new NotFoundException("Такого пользователя не существует.");
+        }
     }
 
     public void validateUser(User user) {
