@@ -7,15 +7,20 @@ import org.springframework.util.StringUtils;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.FilmSortBy;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.Set;
 
 @Service
@@ -27,10 +32,14 @@ public class FilmService {
 
     private final UserStorage userStorage;
 
+    private final DirectorStorage directorDbStorage;
+
+
     public FilmService(@Qualifier("DbFilmStorage")
-                       FilmStorage filmStorage, @Qualifier("DbUserStorage") UserStorage userStorage) {
+                       FilmStorage filmStorage, @Qualifier("DbUserStorage") UserStorage userStorage, DirectorStorage directorDbStorage) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
+        this.directorDbStorage = directorDbStorage;
     }
 
     public Film getFilmById(Integer id) {
@@ -44,6 +53,33 @@ public class FilmService {
     public List<Film> getAllFilms() {
         log.info("FilmService: Получение списка всех фильмов");
         return filmStorage.getAllFilms();
+    }
+
+    public List<Film> getFilmsByDirId(Integer id, FilmSortBy by) {
+        if (directorDbStorage.getDirectorById(id) == null) {
+            throw new NotFoundException(String.format("Режиссер с id %s не найден", id));
+        }
+        List<Film> allFilms = filmStorage.getAllFilms();
+        switch (by) {
+
+            case likes:
+                return allFilms.stream()
+                        .filter(p1 -> !p1.getDirectors().isEmpty() && p1.getDirectors().get(0).getId() == id)
+                        .sorted(Comparator.comparing(Film::getLikesCount))
+                        .collect(Collectors.toList());
+
+
+            case year:
+                return allFilms.stream()
+                        .filter(p1 -> !p1.getDirectors().isEmpty() && p1.getDirectors().get(0).getId() == id)
+                        .sorted(Comparator.comparing(Film::getReleaseDate))
+                        .collect(Collectors.toList());
+
+
+            default:
+                return new ArrayList<>();
+
+        }
     }
 
     public Film addFilm(Film film) {
