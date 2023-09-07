@@ -20,7 +20,7 @@ public class DirectorService {
     }
 
     public Director createDirector(Director director) {
-        if(director.getName().isBlank()){
+        if (director.getName().isBlank()) {
             throw new ValidationException(String.format("Имя режиссера не дожно быть пустым"));
         }
         return directorStorage.createDirector(director);
@@ -36,7 +36,7 @@ public class DirectorService {
 
     public Director getDirectorById(int id) {
         Director director = directorStorage.getDirectorById(id);
-        if(director == null){
+        if (director == null) {
             throw new NotFoundException(String.format("Режиссер с id %s не найден", id));
         }
         return director;
