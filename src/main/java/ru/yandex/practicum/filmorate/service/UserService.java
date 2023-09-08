@@ -21,7 +21,7 @@ public class UserService {
 
     public User getUser(Integer id) {
         log.info(String.format("UserService: Поиск пользователя по идентификатору %d", id));
-        User user = userStorage.getUser(id);
+        User user = userStorage.get(id);
         if (user == null)
             throw new NotFoundException(String.format("Пользователь %d не найден!", id));
         return user;
@@ -29,19 +29,19 @@ public class UserService {
 
     public List<User> getAllUsers() {
         log.info("UserService: Получение списка всех пользователей");
-        return userStorage.getAllUsers();
+        return userStorage.getAll();
     }
 
     public User addUser(User user) {
         log.info("UserService: Добавление пользователя");
         validateUser(user);
-        return userStorage.addUser(user);
+        return userStorage.add(user);
     }
 
     public User updateUser(User user) {
         log.info(String.format("UserService: Изменение данных пользователя по идентификатору %d", user.getId()));
         validateUser(user);
-        return userStorage.updateUser(user);
+        return userStorage.update(user);
     }
 
     public User deleteUser(Integer id) {
@@ -82,10 +82,10 @@ public class UserService {
         return userStorage.getCommonFriends(id, otherId);
     }
 
-    public List<Feed> getUserFeed(Integer userId) {
+    public List<Feed> getFeedsByUserId(Integer userId) {
         if (isExist(userId)) {
-            List<Feed> userFeed = userStorage.getUserFeed(userId);
-            log.info("Новостная лента пользователя {}: {} {}", userId, userStorage.getUser(userId).getName(), userFeed);
+            List<Feed> userFeed = userStorage.getFeedsByUserId(userId);
+            log.info("Новостная лента пользователя {}: {} {}", userId, userStorage.get(userId).getName(), userFeed);
             return userFeed;
         } else {
             throw new NotFoundException("Такого пользователя не существует.");
@@ -123,7 +123,7 @@ public class UserService {
     }
 
     private boolean isExist(int id) {
-        for (User user : userStorage.getAllUsers()) {
+        for (User user : userStorage.getAll()) {
             if (id == user.getId()) {
                 return true;
             }

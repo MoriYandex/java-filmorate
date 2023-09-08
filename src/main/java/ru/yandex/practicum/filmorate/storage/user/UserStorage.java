@@ -6,13 +6,15 @@ import ru.yandex.practicum.filmorate.model.Feed;
 import java.util.List;
 
 public interface UserStorage {
-    User getUser(Integer id);
+    User get(Integer id);
 
-    List<User> getAllUsers();
+    List<User> getAll();
 
-    User addUser(User user);
+    User add(User user);
 
-    User updateUser(User user);
+    User update(User user);
+
+    User delete(Integer id);
 
     User addFriend(Integer id, Integer friendId);
 
@@ -22,7 +24,5 @@ public interface UserStorage {
 
     List<User> getCommonFriends(Integer id, Integer otherId);
 
-    User delete(Integer id);
-
-    List<Feed> getUserFeed(Integer id);
+    List<Feed> getFeedsByUserId(Integer id);
 }

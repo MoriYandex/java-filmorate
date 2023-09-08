@@ -25,27 +25,27 @@ public class DbGenreStorage implements GenreStorage {
     private final JdbcTemplate jdbcTemplate;
 
     @Override
-    public Genre getGenre(Integer id) {
+    public Genre get(Integer id) {
         String query = "SELECT * FROM t005_genres WHERE t005_id = ?";
         List<Genre> resultList = jdbcTemplate.query(query, (rs, rowNum) -> mapRecordToGenre(rs), id);
         return resultList.stream().findFirst().orElse(null);
     }
 
     @Override
-    public List<Genre> getAllGenres() {
+    public List<Genre> getAll() {
         String sqlQueryT005 = "SELECT * FROM t005_genres";
         return jdbcTemplate.query(sqlQueryT005, (rs, rowNum) -> mapRecordToGenre(rs));
     }
 
-    private List<GenreToFilm> getAllGenreToFilm() {
+    private List<GenreToFilm> getAllGenresToFilm() {
         String sqlQueryT007 = "SELECT * FROM t007_links_t001_t005";
         return jdbcTemplate.query(sqlQueryT007, (rs, rowNum) -> mapRecordToGenreToFilm(rs));
     }
 
     @Override
     public Map<Integer, List<Genre>> getMapOfGenresToFilms() {
-        List<Genre> genres = getAllGenres();
-        List<GenreToFilm> genresToFilm = getAllGenreToFilm();
+        List<Genre> genres = getAll();
+        List<GenreToFilm> genresToFilm = getAllGenresToFilm();
         Map<Integer, List<Genre>> resultMap = new HashMap<>();
         for (GenreToFilm link : genresToFilm) {
             if (resultMap.containsKey(link.getFilmId()))
@@ -63,7 +63,7 @@ public class DbGenreStorage implements GenreStorage {
     }
 
     @Override
-    public List<Genre> getAllGenresByFilmId(Integer filmId) {
+    public List<Genre> getAllByFilmId(Integer filmId) {
         String query = "SELECT t005.* FROM t005_genres t005 JOIN t007_links_t001_t005 t007 on t007.t005_id = t005.t005_id WHERE t007.t001_id = ?";
         return jdbcTemplate.query(query, (rs, rowNum) -> mapRecordToGenre(rs), filmId);
     }

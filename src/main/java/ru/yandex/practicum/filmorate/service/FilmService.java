@@ -34,7 +34,7 @@ public class FilmService {
 
     public Film getFilmById(Integer id) {
         log.info(String.format("FilmService: Поиск фильма по идентификатору %d", id));
-        Film film = filmStorage.getFilm(id);
+        Film film = filmStorage.get(id);
         if (film == null)
             throw new NotFoundException(String.format("Фильм %d не найден!", id));
         return film;
@@ -42,14 +42,14 @@ public class FilmService {
 
     public List<Film> getAllFilms() {
         log.info("FilmService: Получение списка всех фильмов");
-        return filmStorage.getAllFilms();
+        return filmStorage.getAll();
     }
 
     public List<Film> getFilmsByDirId(Integer id, FilmSortBy by) {
-        if (directorStorage.getDirectorById(id) == null) {
+        if (!directorStorage.exists(id)) {
             throw new NotFoundException(String.format("Режиссер с id %s не найден", id));
         }
-        List<Film> allFilms = filmStorage.getAllFilms();
+        List<Film> allFilms = filmStorage.getAll();
         switch (by) {
 
             case likes:
@@ -75,13 +75,13 @@ public class FilmService {
     public Film addFilm(Film film) {
         log.info("FilmService: Добавление фильма");
         validateFilm(film);
-        return filmStorage.addFilm(film);
+        return filmStorage.add(film);
     }
 
     public Film updateFilm(Film film) {
         log.info(String.format("FilmService: Изменение данных фильма по идентификатору %d", film.getId()));
         validateFilm(film);
-        return filmStorage.updateFilm(film);
+        return filmStorage.update(film);
     }
 
     public Film deleteFilm(Integer id) {
@@ -91,7 +91,7 @@ public class FilmService {
 
     public Film addLike(Integer id, Integer userId) {
         log.info(String.format("FilmService: Добавление лайка фильму %d пользователем %d", id, userId));
-        User user = userStorage.getUser(userId);
+        User user = userStorage.get(userId);
         if (user == null)
             throw new NotFoundException(String.format("Пользователь %d не найден!", userId));
         return filmStorage.addLike(id, userId);
@@ -102,7 +102,7 @@ public class FilmService {
             throw new NotFoundException("Пользователь не может быть с отрицательным id.");
         }
         log.info(String.format("FilmService: Удаление лайка фильму %d пользователем %d", id, userId));
-        User user = userStorage.getUser(userId);
+        User user = userStorage.get(userId);
         if (user == null)
             throw new NotFoundException(String.format("Пользователь %d не найден!", id));
         return filmStorage.deleteLike(id, userId);
@@ -148,7 +148,7 @@ public class FilmService {
 
         Set<Integer> userLikes = filmStorage.getAllUserLikesById(id);
 
-        List<User> allUsers = userStorage.getAllUsers();
+        List<User> allUsers = userStorage.getAll();
 
         List<User> usersForReturn = new ArrayList<>();
 
@@ -156,18 +156,16 @@ public class FilmService {
 
         for (User other : allUsers) {
 
-            Set<Integer> intersection = userLikes;
+            userLikes.retainAll(filmStorage.getAllUserLikesById(other.getId()));
 
-            intersection.retainAll(filmStorage.getAllUserLikesById(other.getId()));
+            if (userLikes.size() > maxIntersection) {
 
-            if (intersection.size() > maxIntersection) {
-
-                maxIntersection = intersection.size();
+                maxIntersection = userLikes.size();
 
                 usersForReturn.clear();
                 usersForReturn.add(other);
 
-            } else if (intersection.size() == maxIntersection) {
+            } else if (userLikes.size() == maxIntersection) {
                 usersForReturn.add(other);
             }
 
@@ -185,7 +183,7 @@ public class FilmService {
 
     public List<Film> getRecommendFilms(Integer idOfUser) {
 
-        User user = userStorage.getUser(idOfUser);
+        User user = userStorage.get(idOfUser);
         if (user != null) {
 
             Set<Integer> idOfReturnFilms = new HashSet<>();
@@ -196,7 +194,7 @@ public class FilmService {
             for (User u : intersectionByLikeUsers) {
                 idOfReturnFilms.addAll(getDifference(user, u));
             }
-            List<Film> allFilms = filmStorage.getAllFilms();
+            List<Film> allFilms = filmStorage.getAll();
             List<Film> filmsForRet = new ArrayList<>();
 
             for (Film f : allFilms) {
@@ -211,7 +209,7 @@ public class FilmService {
 
     public List<Film> searchFilm(String query, String by) {
 
-        List<Film> allFilms = filmStorage.getAllFilms();
+        List<Film> allFilms = filmStorage.getAll();
 
         List<Film> forRet = new ArrayList<>();
 

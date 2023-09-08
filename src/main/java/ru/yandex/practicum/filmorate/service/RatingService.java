@@ -15,7 +15,7 @@ import java.util.List;
 public class RatingService {
     private final RatingStorage ratingStorage;
 
-    public Rating getRatingById(Integer id) {
+    public Rating getRating(Integer id) {
         log.info(String.format("RatingService: Поиск рейтинга по идентификатору %d", id));
         Rating rating = ratingStorage.getRating(id);
         if (rating == null)

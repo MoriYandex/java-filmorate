@@ -15,29 +15,29 @@ public class ReviewController {
     private final ReviewService reviewService;
 
     @PostMapping
-    public Review addReview(@Valid @RequestBody Review review) {
+    public Review add(@Valid @RequestBody Review review) {
         return reviewService.addReview(review);
     }
 
     @PutMapping
-    public Review updateReview(@Valid @RequestBody Review review) {
+    public Review update(@Valid @RequestBody Review review) {
         return reviewService.updateReview(review);
     }
 
     @DeleteMapping("/{id}")
-    public Boolean deleteReview(@PathVariable Integer id) {
+    public Boolean delete(@PathVariable Integer id) {
         return reviewService.deleteReview(id);
     }
 
     @GetMapping
-    public List<Review> getAllReviews(
+    public List<Review> getAll(
             @RequestParam(required = false) Integer filmId,
             @RequestParam(defaultValue = "10", required = false) Integer count) {
         return reviewService.getAllReviews(filmId, count);
     }
 
     @GetMapping("/{id}")
-    public Review getReview(@PathVariable Integer id) {
+    public Review get(@PathVariable Integer id) {
         return reviewService.getReview(id);
     }
 

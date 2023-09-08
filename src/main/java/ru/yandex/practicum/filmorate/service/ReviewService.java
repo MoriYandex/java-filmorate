@@ -16,31 +16,31 @@ public class ReviewService {
 
     public Review addReview(Review review) {
         log.info("ReviewService: Добавление отзыва");
-        return reviewStorage.addReview(review);
+        return reviewStorage.add(review);
     }
 
     public Review updateReview(Review review) {
         log.info(String.format("ReviewService: Изменение данных отзыва по идентификатору %d", review.getReviewId()));
-        return reviewStorage.updateReview(review);
+        return reviewStorage.update(review);
     }
 
     public Boolean deleteReview(Integer id) {
         log.info(String.format("ReviewService: Удаление отзыва по идентификатору %d", id));
-        return reviewStorage.deleteReview(id);
+        return reviewStorage.delete(id);
     }
 
     public Review getReview(Integer id) {
         log.info(String.format("ReviewService: Поиск отзыва по идентификатору %d", id));
-        return reviewStorage.getReview(id);
+        return reviewStorage.get(id);
     }
 
     public List<Review> getAllReviews(Integer filmId, Integer count) {
         if (filmId == null) {
             log.info(String.format("ReviewService: Получение списка %d отзывов", count));
-            return reviewStorage.getAllReviews(count);
+            return reviewStorage.getAll(count);
         } else {
             log.info(String.format("ReviewService: Получение списка %d отзывов для фильма с id %d.", count, filmId));
-            return reviewStorage.getAllReviewsByFilmId(filmId, count);
+            return reviewStorage.getAllByFilmId(filmId, count);
         }
     }
 

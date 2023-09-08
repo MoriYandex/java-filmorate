@@ -43,34 +43,34 @@ class FilmorateApplicationTests {
 
     public void test1Users() {
         User user1 = new User(0, "a@b.ru", "login", "name", LocalDate.of(1983, 7, 1), new HashSet<>());
-        userStorage.addUser(user1);
-        User user2 = userStorage.getUser(1);
+        userStorage.add(user1);
+        User user2 = userStorage.get(1);
         assertEquals(user1.getId(), 1);
         user2.setEmail("d@e.ru");
-        userStorage.updateUser(user2);
-        User user3 = userStorage.getUser(1);
+        userStorage.update(user2);
+        User user3 = userStorage.get(1);
         assertEquals(user3.getEmail(), "d@e.ru");
-        userStorage.addUser(user3);
-        List<User> users = userStorage.getAllUsers();
+        userStorage.add(user3);
+        List<User> users = userStorage.getAll();
         assertEquals(users.size(), 2);
-        assertNull(userStorage.getUser(3));
+        assertNull(userStorage.get(3));
         user3.setLogin("login2");
-        userStorage.addUser(user3);
-        users = userStorage.getAllUsers();
+        userStorage.add(user3);
+        users = userStorage.getAll();
         assertEquals(users.size(), 3);
     }
 
     public void test2Friends() {
-        User user1 = userStorage.getUser(1);
+        User user1 = userStorage.get(1);
         userStorage.addFriend(user1.getId(), 2);
         List<User> friends1 = userStorage.getAllFriends(1);
         assertEquals(friends1.size(), 1);
         List<User> friends2 = userStorage.getAllFriends(2);
         assertEquals(friends2.size(), 0);
         userStorage.addFriend(2, 1);
-        Friendship friendship = friendshipStorage.getFriendship(1, 2);
+        Friendship friendship = friendshipStorage.get(1, 2);
         assertEquals(friendship.getConfirmed(), true);
-        assertNull(friendshipStorage.getFriendship(2, 1));
+        assertNull(friendshipStorage.get(2, 1));
         List<User> friends3 = userStorage.getCommonFriends(1, 2);
         assertEquals(friends3.size(), 0);
         userStorage.addFriend(1, 2);
@@ -85,15 +85,15 @@ class FilmorateApplicationTests {
         friends3 = userStorage.getCommonFriends(1, 2);
         assertEquals(friends3.size(), 1);
         userStorage.deleteFriend(3, 1);
-        friendship = friendshipStorage.getFriendship(1, 3);
+        friendship = friendshipStorage.get(1, 3);
         assertEquals(friendship.getConfirmed(), false);
-        assertNull(friendshipStorage.getFriendship(3, 1));
+        assertNull(friendshipStorage.get(3, 1));
     }
 
     public void test3Films() {
         List<Genre> genres = new ArrayList<>();
-        genres.add(genreStorage.getGenre(1));
-        genres.add(genreStorage.getGenre(3));
+        genres.add(genreStorage.get(1));
+        genres.add(genreStorage.get(3));
         Film film1 = new Film(5,
                 "Film1",
                 "description1",
@@ -102,28 +102,28 @@ class FilmorateApplicationTests {
                 genres,
                 ratingStorage.getRating(2),
                 new HashSet<>(), new ArrayList<>());
-        film1 = filmStorage.addFilm(film1);
-        List<Film> films1 = filmStorage.getAllFilms();
+        film1 = filmStorage.add(film1);
+        List<Film> films1 = filmStorage.getAll();
         assertEquals(films1.size(), 1);
         assertEquals(films1.get(0).getGenres().size(), 2);
         assertEquals(films1.get(0).getId(), 1);
         assertEquals(film1.getId(), 1);
-        genres = genreStorage.getAllGenres();
+        genres = genreStorage.getAll();
         film1.setGenres(genres);
-        filmStorage.updateFilm(film1);
-        film1 = filmStorage.getFilm(1);
+        filmStorage.update(film1);
+        film1 = filmStorage.get(1);
         assertEquals(film1.getGenres().size(), 6);
         Rating rating = ratingStorage.getRating(3);
         film1.setMpa(rating);
-        filmStorage.addFilm(film1);
-        films1 = filmStorage.getAllFilms();
+        filmStorage.add(film1);
+        films1 = filmStorage.getAll();
         assertEquals(films1.size(), 2);
-        Film film2 = filmStorage.getFilm(2);
+        Film film2 = filmStorage.get(2);
         assertEquals(film2.getMpa().getId(), 3);
         List<Rating> ratings = ratingStorage.getAllRatings();
         film2.setMpa(ratings.get(3));
-        filmStorage.addFilm(film2);
-        films1 = filmStorage.getAllFilms();
+        filmStorage.add(film2);
+        films1 = filmStorage.getAll();
         assertEquals(films1.size(), 3);
         assertEquals(films1.get(2).getMpa().getId(), 4);
     }

@@ -27,20 +27,20 @@ public class DbFilmStorage implements FilmStorage {
     private final GenreStorage genreStorage;
 
     @Override
-    public Film getFilm(Integer id) {
+    public Film get(Integer id) {
         String query = "SELECT * FROM t001_films t001 LEFT JOIN t006_ratings t006 ON t006.t006_id = t001.t006_id " +
                 "LEFT JOIN t008_directors t008 ON t008.t008_id = T001.T008_ID WHERE t001.t001_id = ?";
         List<Film> resultList = jdbcTemplate.query(query, (rs, rowNum) -> mapRecordToFilm(rs), id);
         Film film = resultList.stream().findFirst().orElse(null);
         if (film == null)
             return null;
-        film.setGenres(genreStorage.getAllGenresByFilmId(id));
+        film.setGenres(genreStorage.getAllByFilmId(id));
         film.setLikes(getLikesByFilmId(id));
         return film;
     }
 
     @Override
-    public List<Film> getAllFilms() {
+    public List<Film> getAll() {
         String query = "SELECT * FROM t001_films t001 LEFT JOIN t006_ratings t006 ON t006.t006_id = t001.t006_id " +
                 "LEFT JOIN t008_directors t008 ON t008.t008_id = T001.T008_ID";
         List<Film> resultList = jdbcTemplate.query(query, (rs, rowNum) -> mapRecordToFilm(rs));
@@ -55,7 +55,7 @@ public class DbFilmStorage implements FilmStorage {
     }
 
     @Override
-    public Film addFilm(Film film) {
+    public Film add(Film film) {
         String sqlQueryT001 = "INSERT INTO t001_films (t001_name, t001_description, t001_release_date, t001_duration, t006_id, t008_id) VALUES (?, ?, ?, ?, ?, ?)";
         String sqlQueryT007 = "INSERT INTO t007_links_t001_t005 (t001_id, t005_id) VALUES (?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -78,8 +78,8 @@ public class DbFilmStorage implements FilmStorage {
     }
 
     @Override
-    public Film updateFilm(Film film) {
-        if (getFilm(film.getId()) == null) {
+    public Film update(Film film) {
+        if (get(film.getId()) == null) {
             throw new NotFoundException(String.format("Фильм %d не найден!", film.getId()));
         }
         String sqlQueryT001 = "UPDATE t001_films SET t001_name = ?, t001_description = ?, t001_release_date = ?, t001_duration = ?, t006_id = ?, t008_id = ? WHERE t001_id = ?";
@@ -103,7 +103,7 @@ public class DbFilmStorage implements FilmStorage {
 
     @Override
     public Film addLike(Integer id, Integer userId) {
-        Film film = getFilm(id);
+        Film film = get(id);
         if (film == null)
             throw new NotFoundException(String.format("Фильм %d не найден!", id));
         addToFeedAddLike(userId, id);
@@ -118,7 +118,7 @@ public class DbFilmStorage implements FilmStorage {
 
     @Override
     public Film deleteLike(Integer id, Integer userId) {
-        Film film = getFilm(id);
+        Film film = get(id);
         if (film == null)
             throw new NotFoundException(String.format("Фильм %d не найден!", id));
         addToFeedDeleteLike(userId, id);
@@ -167,7 +167,7 @@ public class DbFilmStorage implements FilmStorage {
 
     @Override
     public Film delete(Integer id) {
-        Film film = getFilm(id);
+        Film film = get(id);
         if (film == null) {
             throw new NotFoundException(String.format("Фильма с id %d не существует", id));
         }
@@ -185,7 +185,7 @@ public class DbFilmStorage implements FilmStorage {
                 "WHERE l1.t002_id = ? AND l2.t002_id = ? AND l1.t001_id = l2.t001_id";
         List<Film> resultList = jdbcTemplate.query(
                 sqlCommonFilms,
-                (rs, rowNum) -> getFilm(rs.getInt("t001_id")),
+                (rs, rowNum) -> get(rs.getInt("t001_id")),
                 userId,
                 friendId
         );
@@ -205,7 +205,7 @@ public class DbFilmStorage implements FilmStorage {
             Integer ratingId = rs.getInt("t006_id");
             String ratingName = rs.getString("t006_code");
             String ratingDescription = rs.getString("t006_description");
-            Integer directorId = rs.getInt("t008_id");
+            int directorId = rs.getInt("t008_id");
             String directorName = rs.getString("t008_name");
             List<Director> directors = new ArrayList<>();
             if (directorId != 0) {

@@ -1,28 +1,20 @@
 package ru.yandex.practicum.filmorate.storage.director;
 
 import ru.yandex.practicum.filmorate.model.Director;
-import ru.yandex.practicum.filmorate.model.Film;
 
 import java.util.List;
 
 public interface DirectorStorage {
 
-    Director createDirector(Director director);
+    Director add(Director director);
 
-    Director updateDirector(Director director);
+    Director update(Director director);
 
-    void deleteDirector(int id);
+    void delete(int id);
 
-    void deleteDirectorByFilm(int id);
+    Director get(int id);
 
-    Director getDirectorById(int id);
+    List<Director> getAll();
 
-    List<Director> getListAllDirectors();
-
-    boolean isDirectorExists(int id);
-
-    void addDirector(Film film);
-
-    void load(List<Film> films);
-
+    Boolean exists(int id);
 }

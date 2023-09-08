@@ -15,9 +15,9 @@ import java.util.List;
 public class GenreService {
     private final GenreStorage genreStorage;
 
-    public Genre getGenreById(Integer id) {
+    public Genre getGenre(Integer id) {
         log.info(String.format("GenreService: Поиск жанра по идентификатору %d", id));
-        Genre genre = genreStorage.getGenre(id);
+        Genre genre = genreStorage.get(id);
         if (genre == null)
             throw new NotFoundException(String.format("Жанр %d не найден!", id));
         return genre;
@@ -25,6 +25,6 @@ public class GenreService {
 
     public List<Genre> getAllGenres() {
         log.info("GenreService: Получение списка всех жанров");
-        return genreStorage.getAllGenres();
+        return genreStorage.getAll();
     }
 }

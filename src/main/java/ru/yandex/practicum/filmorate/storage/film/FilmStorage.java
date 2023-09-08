@@ -6,24 +6,21 @@ import java.util.List;
 import java.util.Set;
 
 public interface FilmStorage {
-    Film getFilm(Integer id);
+    Film get(Integer id);
 
-    List<Film> getAllFilms();
+    List<Film> getAll();
 
-    Film addFilm(Film film);
+    Film add(Film film);
 
-    Film updateFilm(Film film);
+    Film update(Film film);
+
+    Film delete(Integer id);
 
     Film addLike(Integer id, Integer userId);
 
     Film deleteLike(Integer id, Integer userId);
 
-    //List<Film> getMostPopular(Integer count);
-
-    Film delete(Integer id);
-
     Set<Integer> getAllUserLikesById(Integer id);
-
 
     List<Film> getCommonFilms(Integer userId, Integer friendId);
 

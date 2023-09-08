@@ -25,7 +25,7 @@ public class DbReviewStorage implements ReviewStorage {
     private final JdbcTemplate jdbcTemplate;
 
     @Override
-    public Review addReview(Review review) {
+    public Review add(Review review) {
         findFilm(review.getFilmId());
         findUser(review.getUserId());
 
@@ -43,12 +43,12 @@ public class DbReviewStorage implements ReviewStorage {
         review.setReviewId(Objects.requireNonNull(keyHolder.getKey()).intValue());
         review.setUseful(0);
         addToFeedReviewCreate(review.getReviewId(), review.getUserId());
-        return getReview(review.getReviewId());
+        return get(review.getReviewId());
     }
 
     @Override
-    public Review updateReview(Review review) {
-        if (getReview(review.getReviewId()) == null) {
+    public Review update(Review review) {
+        if (get(review.getReviewId()) == null) {
             throw new NotFoundException(String.format("Отзыв %d не найден!", review.getReviewId()));
         }
 
@@ -63,12 +63,12 @@ public class DbReviewStorage implements ReviewStorage {
 
         log.info(String.format("Отзыв %d успешно изменён.", review.getReviewId()));
         addToFeedReviewUpdate(review.getReviewId());
-        return getReview(review.getReviewId());
+        return get(review.getReviewId());
     }
 
     @Override
-    public Boolean deleteReview(Integer id) {
-        if (getReview(id) == null) {
+    public Boolean delete(Integer id) {
+        if (get(id) == null) {
             throw new NotFoundException(String.format("Отзыв %d не найден!", id));
         }
 
@@ -76,12 +76,12 @@ public class DbReviewStorage implements ReviewStorage {
         jdbcTemplate.update(sqlQueryDeleteReviewFeedbacks, id);
 
         String sqlQueryDeleteReview = "delete from t009_reviews where t009_id = ?";
-        addToFeedReviewDelete(id, getReview(id).getUserId());
+        addToFeedReviewDelete(id, get(id).getUserId());
         return jdbcTemplate.update(sqlQueryDeleteReview, id) > 0;
     }
 
     @Override
-    public Review getReview(Integer id) {
+    public Review get(Integer id) {
         String sqlQueryT009 = "SELECT r.t009_id, r.t009_content, r.t009_is_positive, r.t002_id, " +
                 "r.t001_id, rf.t010_value " +
                 "FROM t009_reviews r " +
@@ -96,7 +96,7 @@ public class DbReviewStorage implements ReviewStorage {
     }
 
     @Override
-    public List<Review> getAllReviews(Integer count) {
+    public List<Review> getAll(Integer count) {
         String sqlQueryT009 = "SELECT r.t009_id, r.t009_content, r.t009_is_positive, r.t002_id, " +
                 "r.t001_id, rf.t010_value " +
                 "FROM t009_reviews r " +
@@ -110,7 +110,7 @@ public class DbReviewStorage implements ReviewStorage {
     }
 
     @Override
-    public List<Review> getAllReviewsByFilmId(Integer filmId, Integer count) {
+    public List<Review> getAllByFilmId(Integer filmId, Integer count) {
         String sqlQueryT009 = "SELECT r.t009_id, r.t009_content, r.t009_is_positive, r.t002_id, " +
                 "r.t001_id, rf.t010_value " +
                 "FROM t009_reviews r " +
@@ -188,7 +188,7 @@ public class DbReviewStorage implements ReviewStorage {
 
     private void insertLikeOrDislikeInTable(Integer id, Integer userId, Integer value) {
         findUser(userId);
-        Review review = getReview(id);
+        Review review = get(id);
 
         String sqlQueryIfLikeAlreadyAdded = "SELECT t010_value FROM t010_review_feedbacks WHERE t002_id = ?";
         SqlRowSet rowSetUser = jdbcTemplate.queryForRowSet(sqlQueryIfLikeAlreadyAdded, userId);
@@ -220,7 +220,7 @@ public class DbReviewStorage implements ReviewStorage {
     private void deleteLikeOrDislike(Integer id, Integer userId, Integer value) {
         findUser(userId);
         findLikeOrDislike(id, userId);
-        Review review = getReview(id);
+        Review review = get(id);
 
         String sqlQuery010 = "DELETE FROM t010_review_feedbacks WHERE t009_id = ? AND t002_id = ?";
         jdbcTemplate.update(sqlQuery010, id, userId);
@@ -232,7 +232,7 @@ public class DbReviewStorage implements ReviewStorage {
         String sqlQuery = "INSERT INTO t011_feeds (t002_id, t011_event_type, t011_operation," +
                 " t011_entity_id, t011_timestamp) " +
                 "VALUES (?, 'REVIEW', 'UPDATE', ?,?)";
-        jdbcTemplate.update(sqlQuery, getReview(reviewId).getUserId(),
+        jdbcTemplate.update(sqlQuery, get(reviewId).getUserId(),
                 reviewId, Date.from(Instant.now()));
     }
 

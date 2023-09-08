@@ -5,17 +5,17 @@ import ru.yandex.practicum.filmorate.model.Review;
 import java.util.List;
 
 public interface ReviewStorage {
-    Review addReview(Review review);
+    Review add(Review review);
 
-    Review updateReview(Review review);
+    Review update(Review review);
 
-    Boolean deleteReview(Integer id);
+    Boolean delete(Integer id);
 
-    Review getReview(Integer id);
+    Review get(Integer id);
 
-    List<Review> getAllReviews(Integer count);
+    List<Review> getAll(Integer count);
 
-    List<Review> getAllReviewsByFilmId(Integer filmId, Integer count);
+    List<Review> getAllByFilmId(Integer filmId, Integer count);
 
     void addLike(Integer id, Integer userId);
 
