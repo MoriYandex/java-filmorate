@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.FilmSortBy;
-import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.service.*;
 
 import java.util.List;
 
@@ -51,9 +51,9 @@ public class FilmController {
 
     @GetMapping("/popular")
     public List<Film> getMostPopular(
-        @RequestParam(required = false) Integer count,
-        @RequestParam(required = false) Integer genreId,
-        @RequestParam(required = false) Integer year) {
+            @RequestParam(required = false) Integer count,
+            @RequestParam(required = false) Integer genreId,
+            @RequestParam(required = false) Integer year) {
         return filmService.getMostPopular(count, genreId, year);
     }
 
@@ -67,10 +67,6 @@ public class FilmController {
         return filmService.getFilmsByDirId(directorId, sortBy);
     }
 
-    @GetMapping("/director/{directorId}")
-    public List<Film> getFilmsByDir(@PathVariable Integer directorId, @RequestParam FilmSortBy sortBy) {
-        return filmService.getFilmsByDirId(directorId, sortBy);
-    }
 
     @GetMapping("search")
     public List<Film> searchFilms(@RequestParam String query, @RequestParam String by) {

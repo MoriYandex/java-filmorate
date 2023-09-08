@@ -1,7 +1,7 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -21,15 +21,10 @@ import java.util.stream.Collectors;
 
 @Component("DbFilmStorage")
 @Slf4j
+@RequiredArgsConstructor
 public class DbFilmStorage implements FilmStorage {
     private final JdbcTemplate jdbcTemplate;
-
     private final GenreStorage genreStorage;
-
-    public DbFilmStorage(JdbcTemplate jdbcTemplate, @Qualifier("DbGenreStorage") GenreStorage genreStorage) {
-        this.jdbcTemplate = jdbcTemplate;
-        this.genreStorage = genreStorage;
-    }
 
     @Override
     public Film getFilm(Integer id) {
@@ -68,7 +63,7 @@ public class DbFilmStorage implements FilmStorage {
             PreparedStatement statement = connection.prepareStatement(sqlQueryT001, new String[]{"t001_id"});
             statement.setString(1, film.getName());
             statement.setString(2, film.getDescription());
-            statement.setDate(3, Date.valueOf(film.getReleaseDate()));
+            statement.setDate(3, java.sql.Date.valueOf(film.getReleaseDate()));
             statement.setInt(4, film.getDuration());
             statement.setInt(5, film.getMpa().getId());
             statement.setObject(6, film.getDirectors().isEmpty() ? null : film.getDirectors().get(0).getId(), Types.INTEGER);
@@ -111,12 +106,12 @@ public class DbFilmStorage implements FilmStorage {
         Film film = getFilm(id);
         if (film == null)
             throw new NotFoundException(String.format("Фильм %d не найден!", id));
+        addToFeedAddLike(userId, id);
         if (film.getLikes().contains(userId))
             return film;
         String sqlQuery003 = "INSERT INTO t003_likes (t001_id, t002_id) VALUES (?, ?)";
         jdbcTemplate.update(sqlQuery003, id, userId);
         film.getLikes().add(userId);
-        addToFeedAddLike(userId, id);
         log.info(String.format("Добавлен лайк фильму %d пользователем %d.", id, userId));
         return film;
     }
@@ -126,12 +121,12 @@ public class DbFilmStorage implements FilmStorage {
         Film film = getFilm(id);
         if (film == null)
             throw new NotFoundException(String.format("Фильм %d не найден!", id));
+        addToFeedDeleteLike(userId, id);
         if (!film.getLikes().contains(userId))
             return film;
         String sqlQuery003 = "DELETE FROM t003_likes WHERE t001_id = ? AND t002_id = ?";
         jdbcTemplate.update(sqlQuery003, id, userId);
         film.getLikes().remove(userId);
-        addToFeedDeleteLike(userId, id);
         log.info(String.format("Удалён лайк фильму %d пользователем %d.", id, userId));
         return film;
     }
@@ -141,7 +136,7 @@ public class DbFilmStorage implements FilmStorage {
         String sqlQuery = setQueryWithCount();
 
         MapSqlParameterSource paramSource = new MapSqlParameterSource()
-            .addValue("count", count);
+                .addValue("count", count);
         if (genreId == null && year != null) {
             sqlQuery = changeQueryIfYearExists();
             paramSource.addValue("year", year);
@@ -159,8 +154,15 @@ public class DbFilmStorage implements FilmStorage {
         }
 
         NamedParameterJdbcTemplate namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
-
-        return namedParameterJdbcTemplate.query(sqlQuery, paramSource, (rs, rowNum) -> mapRecordToFilm(rs));
+        List<Film> resultList = namedParameterJdbcTemplate.query(sqlQuery, paramSource, (rs, rowNum) -> mapRecordToFilm(rs));
+        Map<Integer, List<Genre>> mapGenresToFilms = genreStorage.getMapOfGenresToFilms();
+        List<Like> likeList = getAllLikes();
+        for (Film film : resultList) {
+            List<Genre> genreList = mapGenresToFilms.get(film.getId());
+            film.setGenres(genreList != null ? genreList : new ArrayList<>());
+            film.setLikes(likeList.stream().filter(x -> film.getId().equals(x.getFilmId())).map(Like::getUserId).collect(Collectors.toSet()));
+        }
+        return resultList;
     }
 
     @Override
@@ -178,19 +180,19 @@ public class DbFilmStorage implements FilmStorage {
     @Override
     public List<Film> getCommonFilms(Integer userId, Integer friendId) {
         String sqlCommonFilms = "SELECT f.t001_id FROM t003_likes AS l1 " +
-            "LEFT JOIN t001_films AS f ON f.t001_id = l1.t001_id " +
-            "LEFT JOIN t003_likes AS l2 ON l1.t001_id = l2.t001_id " +
-            "WHERE l1.t002_id = ? AND l2.t002_id = ? AND l1.t001_id = l2.t001_id";
+                "LEFT JOIN t001_films AS f ON f.t001_id = l1.t001_id " +
+                "LEFT JOIN t003_likes AS l2 ON l1.t001_id = l2.t001_id " +
+                "WHERE l1.t002_id = ? AND l2.t002_id = ? AND l1.t001_id = l2.t001_id";
         List<Film> resultList = jdbcTemplate.query(
-            sqlCommonFilms,
-            (rs, rowNum) -> getFilm(rs.getInt("t001_id")),
-            userId,
-            friendId
+                sqlCommonFilms,
+                (rs, rowNum) -> getFilm(rs.getInt("t001_id")),
+                userId,
+                friendId
         );
 
         return resultList.stream()
-            .sorted(Comparator.comparing(Film::getLikesCount).reversed())
-            .collect(Collectors.toList());
+                .sorted(Comparator.comparing(Film::getLikesCount).reversed())
+                .collect(Collectors.toList());
     }
 
     private Film mapRecordToFilm(ResultSet rs) {
@@ -220,84 +222,57 @@ public class DbFilmStorage implements FilmStorage {
         }
     }
 
-    private ArrayList<Genre> getAllFilmGenres(ResultSet resultSet) throws SQLException {
-        String sqlQueryGenre = "SELECT g.t005_id, g.t005_name " +
-            "FROM t007_links_t001_t005 as fg " +
-            "INNER JOIN t005_genres g on fg.t005_id = g.t005_id " +
-            "WHERE fg.t001_id = ?";
-
-        HashSet<Genre> genres = jdbcTemplate.query(
-            sqlQueryGenre,
-            this::getFilmGenre,
-            resultSet.getInt("t001_id")
-        );
-
-        return new ArrayList<>(genres);
-    }
-
-    private HashSet<Genre> getFilmGenre(ResultSet resultSet) throws SQLException {
-        HashSet<Genre> genres = new HashSet<>();
-
-        while (resultSet.next()) {
-            Integer genreId = resultSet.getInt("t005_id");
-            String genreName = resultSet.getString("t005_name");
-            genres.add(new Genre(genreId, genreName));
-        }
-
-        return genres;
-    }
-
     private String setQueryWithCount() {
         return "SELECT f.t001_id, f.t001_name, f.t001_description, f.t001_release_date,  f.t001_duration, " +
-            "f.t006_id, r.t006_code, r.t006_description, f.t008_id, d.t008_name " +
-            "FROM t001_films f " +
-            "LEFT JOIN t006_ratings r ON f.t006_id = r.t006_id " +
-            "LEFT JOIN t003_likes l on f.t001_id  = l.t001_id " +
-            "LEFT JOIN t008_directors d ON f.t008_id = d.t008_id " +
-            "GROUP BY f.t001_id " +
-            "ORDER BY COUNT(l.t002_id) DESC " +
-            "LIMIT :count";
+                "f.t006_id, r.t006_code, r.t006_description, f.t008_id, d.t008_name " +
+                "FROM t001_films f " +
+                "LEFT JOIN t006_ratings r ON f.t006_id = r.t006_id " +
+                "LEFT JOIN t003_likes l on f.t001_id  = l.t001_id " +
+                "LEFT JOIN t008_directors d ON f.t008_id = d.t008_id " +
+                "GROUP BY f.t001_id " +
+                "ORDER BY COUNT(l.t002_id) DESC " +
+                "LIMIT :count";
     }
 
     private String changeQueryIfGenreExists() {
         return "SELECT f.t001_id, f.t001_name, f.t001_description, f.t001_release_date,  f.t001_duration, " +
-            "f.t006_id, r.t006_code, r.t006_description, g.t005_id, f.t008_id, d.t008_name " +
-            "FROM t001_films f " +
-            "LEFT JOIN t006_ratings r ON f.t006_id = r.t006_id " +
-            "LEFT JOIN t003_likes l on f.t001_id  = l.t001_id " +
-            "LEFT JOIN t007_links_t001_t005 g on f.t001_id = g.t001_id " +
-            "LEFT JOIN t008_directors d ON f.t008_id = d.t008_id " +
-            "WHERE g.t005_id = :genreId " +
-            "GROUP BY f.t001_id, l.t002_id " +
-            "ORDER BY COUNT(l.t002_id) DESC " +
-            "LIMIT :count";
+                "f.t006_id, r.t006_code, r.t006_description, g.t005_id, f.t008_id, d.t008_name " +
+                "FROM t001_films f " +
+                "LEFT JOIN t006_ratings r ON f.t006_id = r.t006_id " +
+                "LEFT JOIN t003_likes l on f.t001_id  = l.t001_id " +
+                "LEFT JOIN t007_links_t001_t005 g on f.t001_id = g.t001_id " +
+                "LEFT JOIN t008_directors d ON f.t008_id = d.t008_id " +
+                "WHERE g.t005_id = :genreId " +
+                "GROUP BY f.t001_id, l.t002_id " +
+                "ORDER BY COUNT(l.t002_id) DESC " +
+                "LIMIT :count";
     }
 
     private String changeQueryIfYearExists() {
         return "SELECT f.t001_id, f.t001_name, f.t001_description, f.t001_release_date,  f.t001_duration, " +
-            "f.t006_id, r.t006_code, r.t006_description, f.t008_id, d.t008_name  " +
-            "FROM t001_films f " +
-            "LEFT JOIN t006_ratings r ON f.t006_id = r.t006_id " +
-            "LEFT JOIN t003_likes l on f.t001_id  = l.t001_id " +
-            "LEFT JOIN t008_directors d ON f.t008_id = d.t008_id " +
-            "WHERE EXTRACT(YEAR FROM t001_release_date) = :year " +
-            "GROUP BY f.t001_id, l.t002_id " +
-            "ORDER BY COUNT(l.t002_id) DESC " +
-            "LIMIT :count";
+                "f.t006_id, r.t006_code, r.t006_description, f.t008_id, d.t008_name  " +
+                "FROM t001_films f " +
+                "LEFT JOIN t006_ratings r ON f.t006_id = r.t006_id " +
+                "LEFT JOIN t003_likes l on f.t001_id  = l.t001_id " +
+                "LEFT JOIN t008_directors d ON f.t008_id = d.t008_id " +
+                "WHERE EXTRACT(YEAR FROM t001_release_date) = :year " +
+                "GROUP BY f.t001_id, l.t002_id " +
+                "ORDER BY COUNT(l.t002_id) DESC " +
+                "LIMIT :count";
     }
 
     private String changeQueryIfGenreAndYearExist() {
         return "SELECT f.t001_id, f.t001_name, f.t001_description, f.t001_release_date,  f.t001_duration, " +
-            "f.t006_id, r.t006_code, r.t006_description, g.t005_id, f.t008_id, d.t008_name   " +
-            "FROM t001_films f " +
-            "LEFT JOIN t006_ratings r ON f.t006_id = r.t006_id " +
-            "LEFT JOIN t003_likes l on f.t001_id  = l.t001_id " +
-            "LEFT JOIN t007_links_t001_t005 g on f.t001_id = g.t001_id " +
-            "LEFT JOIN t008_directors d ON f.t008_id = d.t008_id " +
-            "WHERE g.t005_id = :genreId AND EXTRACT(YEAR FROM t001_release_date) = :year " +
-            "GROUP BY f.t001_id, l.t002_id " +
-            "ORDER BY COUNT(l.t002_id) DESC " +
-            "LIMIT :count";
+                "f.t006_id, r.t006_code, r.t006_description, g.t005_id, f.t008_id, d.t008_name   " +
+                "FROM t001_films f " +
+                "LEFT JOIN t006_ratings r ON f.t006_id = r.t006_id " +
+                "LEFT JOIN t003_likes l on f.t001_id  = l.t001_id " +
+                "LEFT JOIN t007_links_t001_t005 g on f.t001_id = g.t001_id " +
+                "LEFT JOIN t008_directors d ON f.t008_id = d.t008_id " +
+                "WHERE g.t005_id = :genreId AND EXTRACT(YEAR FROM t001_release_date) = :year " +
+                "GROUP BY f.t001_id, l.t002_id " +
+                "ORDER BY COUNT(l.t002_id) DESC " +
+                "LIMIT :count";
     }
 
     private Set<Integer> getLikesByFilmId(Integer id) {
@@ -323,17 +298,17 @@ public class DbFilmStorage implements FilmStorage {
     }
 
     private void addToFeedAddLike(Integer userId, Integer filmId) {
-        String sql = "INSERT INTO t011_feeds (t011_user_id, t011_event_type, t011_operation," +
+        String sql = "INSERT INTO t011_feeds (t002_id, t011_event_type, t011_operation," +
                 " t011_entity_id, t011_timestamp)" +
                 " VALUES (?, 'LIKE', 'ADD', ?, ?)";
-        jdbcTemplate.update(sql, userId, filmId, Date.from(Instant.now()));
+        jdbcTemplate.update(sql, userId, filmId, java.sql.Date.from(Instant.now()));
     }
 
     private void addToFeedDeleteLike(Integer userId, Integer filmId) {
-        String sql = "INSERT INTO t011_feeds (t011_user_id, t011_event_type, t011_operation," +
+        String sql = "INSERT INTO t011_feeds (t002_id, t011_event_type, t011_operation," +
                 " t011_entity_id, t011_timestamp)" +
                 " VALUES (?, 'LIKE', 'REMOVE', ?, ?)";
-        jdbcTemplate.update(sql, userId, filmId, Date.from(Instant.now()));
+        jdbcTemplate.update(sql, userId, filmId, java.sql.Date.from(Instant.now()));
     }
 
     @Override

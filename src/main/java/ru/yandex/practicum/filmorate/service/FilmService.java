@@ -1,7 +1,7 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
@@ -24,21 +24,13 @@ import java.util.Set;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class FilmService {
     private static final LocalDate MIN_RELEASE_DATE = LocalDate.of(1895, 12, 28);
     private static final int MOST_POPULAR_QUANTITY = 10;
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
-
-    private final DirectorStorage directorDbStorage;
-
-
-    public FilmService(@Qualifier("DbFilmStorage")
-                       FilmStorage filmStorage, @Qualifier("DbUserStorage") UserStorage userStorage, DirectorStorage directorDbStorage) {
-        this.filmStorage = filmStorage;
-        this.userStorage = userStorage;
-        this.directorDbStorage = directorDbStorage;
-    }
+    private final DirectorStorage directorStorage;
 
     public Film getFilmById(Integer id) {
         log.info(String.format("FilmService: Поиск фильма по идентификатору %d", id));
@@ -54,7 +46,7 @@ public class FilmService {
     }
 
     public List<Film> getFilmsByDirId(Integer id, FilmSortBy by) {
-        if (directorDbStorage.getDirectorById(id) == null) {
+        if (directorStorage.getDirectorById(id) == null) {
             throw new NotFoundException(String.format("Режиссер с id %s не найден", id));
         }
         List<Film> allFilms = filmStorage.getAllFilms();

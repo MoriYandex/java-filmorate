@@ -1,10 +1,23 @@
 package ru.yandex.practicum.filmorate.tests;
 
 import lombok.RequiredArgsConstructor;
+import org.junit.jupiter.api.Test;
+import org.springframework.jdbc.core.JdbcTemplate;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.storage.friendship.DbFriendshipStorage;
+import ru.yandex.practicum.filmorate.storage.user.DbUserStorage;
+
+import java.time.LocalDate;
+import java.util.HashSet;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @RequiredArgsConstructor
 class UserControllerTests {
-    private final UserService userService = new UserService(new InMemoryUserStorage());
+    private final UserService userService = new UserService(new DbUserStorage(new JdbcTemplate(), new DbFriendshipStorage(new JdbcTemplate())));
 
     @Test
     void validateUser() {

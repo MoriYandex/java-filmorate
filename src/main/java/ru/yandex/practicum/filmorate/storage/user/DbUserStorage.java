@@ -1,7 +1,7 @@
 package ru.yandex.practicum.filmorate.storage.user;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -27,15 +27,10 @@ import java.util.stream.Collectors;
 @Component
 @Primary
 @Slf4j
+@RequiredArgsConstructor
 public class DbUserStorage implements UserStorage {
     private final JdbcTemplate jdbcTemplate;
-
     private final FriendshipStorage friendshipStorage;
-
-    public DbUserStorage(JdbcTemplate jdbcTemplate, @Qualifier("DbFriendshipStorage") FriendshipStorage friendshipStorage) {
-        this.jdbcTemplate = jdbcTemplate;
-        this.friendshipStorage = friendshipStorage;
-    }
 
     @Override
     public User getUser(Integer id) {
@@ -163,7 +158,7 @@ public class DbUserStorage implements UserStorage {
 
     @Override
     public List<Feed> getUserFeed(Integer id) {
-        String sqlQuery = "SELECT * FROM t011_feeds WHERE t011_user_id = ?";
+        String sqlQuery = "SELECT * FROM t011_feeds WHERE t002_id = ?";
         return jdbcTemplate.query(sqlQuery, this::makeFeed, id);
     }
 
@@ -182,23 +177,23 @@ public class DbUserStorage implements UserStorage {
 
     private Feed makeFeed(ResultSet rs, int rowNum) throws SQLException {
         return Feed.builder()
-                .userId(rs.getInt("t011_user_id"))
+                .userId(rs.getInt("t002_id"))
                 .eventType(rs.getString("t011_event_type"))
                 .operation(rs.getString("t011_operation"))
-                .eventId(rs.getInt("t011_event_id"))
+                .eventId(rs.getInt("t011_id"))
                 .entityId(rs.getInt("t011_entity_id"))
                 .timestamp(rs.getTimestamp("t011_timestamp"))
                 .build();
     }
 
     private void addToFeedAddFriend(Integer userId, Integer friendId) {
-        String sql = "INSERT INTO t011_feeds (t011_user_id, t011_event_type, t011_operation, t011_entity_id, t011_timestamp)" +
+        String sql = "INSERT INTO t011_feeds (t002_id, t011_event_type, t011_operation, t011_entity_id, t011_timestamp)" +
                 " VALUES (?, 'FRIEND', 'ADD', ?, ?)";
         jdbcTemplate.update(sql, userId, friendId, Date.from(Instant.now()));
     }
 
     private void addToFeedDeleteFriend(Integer userId, Integer friendId) {
-        String sql = "INSERT INTO t011_feeds (t011_user_id, t011_event_type, t011_operation, t011_entity_id, t011_timestamp) " +
+        String sql = "INSERT INTO t011_feeds (t002_id, t011_event_type, t011_operation, t011_entity_id, t011_timestamp) " +
                 "VALUES (?, 'FRIEND', 'REMOVE', ?, ?)";
         jdbcTemplate.update(sql, userId, friendId, Date.from(Instant.now()));
     }

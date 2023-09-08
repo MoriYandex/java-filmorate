@@ -30,7 +30,7 @@ public class DbReviewStorage implements ReviewStorage {
         findUser(review.getUserId());
 
         String sqlQueryT009 = "INSERT INTO t009_reviews (t009_content, t009_is_positive, t002_id, t001_id) " +
-            "VALUES (?, ?, ?, ?)";
+                "VALUES (?, ?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
             PreparedStatement statement = connection.prepareStatement(sqlQueryT009, new String[]{"t009_id"});
@@ -56,9 +56,9 @@ public class DbReviewStorage implements ReviewStorage {
                 "SET t009_content = ?, t009_is_positive = ? " +
                 "WHERE t009_id = ?";
         jdbcTemplate.update(sqlQueryT009,
-            review.getContent(),
-            review.getIsPositive(),
-            review.getReviewId()
+                review.getContent(),
+                review.getIsPositive(),
+                review.getReviewId()
         );
 
         log.info(String.format("Отзыв %d успешно изменён.", review.getReviewId()));
@@ -83,10 +83,10 @@ public class DbReviewStorage implements ReviewStorage {
     @Override
     public Review getReview(Integer id) {
         String sqlQueryT009 = "SELECT r.t009_id, r.t009_content, r.t009_is_positive, r.t002_id, " +
-            "r.t001_id, rf.t010_value " +
-            "FROM t009_reviews r " +
-            "LEFT JOIN t010_review_feedbacks rf ON rf.t009_id = r.t009_id " +
-            "WHERE r.t009_id = ?";
+                "r.t001_id, rf.t010_value " +
+                "FROM t009_reviews r " +
+                "LEFT JOIN t010_review_feedbacks rf ON rf.t009_id = r.t009_id " +
+                "WHERE r.t009_id = ?";
         List<Review> resultList = jdbcTemplate.query(sqlQueryT009, (rs, rowNum) -> mapRecordToReview(rs), id);
         Review review = resultList.stream().findFirst().orElse(null);
         if (review == null) {
@@ -98,30 +98,30 @@ public class DbReviewStorage implements ReviewStorage {
     @Override
     public List<Review> getAllReviews(Integer count) {
         String sqlQueryT009 = "SELECT r.t009_id, r.t009_content, r.t009_is_positive, r.t002_id, " +
-            "r.t001_id, rf.t010_value " +
-            "FROM t009_reviews r " +
-            "LEFT JOIN t010_review_feedbacks rf ON rf.t009_id = r.t009_id " +
-            "LIMIT ?";
+                "r.t001_id, rf.t010_value " +
+                "FROM t009_reviews r " +
+                "LEFT JOIN t010_review_feedbacks rf ON rf.t009_id = r.t009_id " +
+                "LIMIT ?";
         List<Review> resultList = jdbcTemplate.query(sqlQueryT009, (rs, rowNum) -> mapRecordToReview(rs), count);
 
         return resultList.stream()
-            .sorted(Comparator.comparing(Review::getUseful).reversed())
-            .collect(Collectors.toList());
+                .sorted(Comparator.comparing(Review::getUseful).reversed())
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<Review> getAllReviewsByFilmId(Integer filmId, Integer count) {
         String sqlQueryT009 = "SELECT r.t009_id, r.t009_content, r.t009_is_positive, r.t002_id, " +
-            "r.t001_id, rf.t010_value " +
-            "FROM t009_reviews r " +
-            "LEFT JOIN t010_review_feedbacks rf ON rf.t009_id = r.t009_id " +
-            "WHERE r.t001_id = ? " +
-            "LIMIT ?";
+                "r.t001_id, rf.t010_value " +
+                "FROM t009_reviews r " +
+                "LEFT JOIN t010_review_feedbacks rf ON rf.t009_id = r.t009_id " +
+                "WHERE r.t001_id = ? " +
+                "LIMIT ?";
         List<Review> resultList = jdbcTemplate.query(sqlQueryT009, (rs, rowNum) -> mapRecordToReview(rs), filmId, count);
 
         return resultList.stream()
-            .sorted(Comparator.comparing(Review::getUseful).reversed())
-            .collect(Collectors.toList());
+                .sorted(Comparator.comparing(Review::getUseful).reversed())
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -180,8 +180,8 @@ public class DbReviewStorage implements ReviewStorage {
         if (!rowSetUser.next()) {
             throw new NotFoundException(String.format(
                     "Лайк/дизлайк отзыву %d от пользователя %d не найден!",
-                id,
-                userId)
+                    id,
+                    userId)
             );
         }
     }
@@ -227,8 +227,9 @@ public class DbReviewStorage implements ReviewStorage {
         review.setUseful(review.getUseful() - value);
         log.info(String.format("Удален лайк/дизлайк отзыву %d пользователем %d.", id, userId));
     }
+
     private void addToFeedReviewUpdate(Integer reviewId) {
-        String sqlQuery = "INSERT INTO t011_feeds (t011_user_id, t011_event_type, t011_operation," +
+        String sqlQuery = "INSERT INTO t011_feeds (t002_id, t011_event_type, t011_operation," +
                 " t011_entity_id, t011_timestamp) " +
                 "VALUES (?, 'REVIEW', 'UPDATE', ?,?)";
         jdbcTemplate.update(sqlQuery, getReview(reviewId).getUserId(),
@@ -236,14 +237,14 @@ public class DbReviewStorage implements ReviewStorage {
     }
 
     private void addToFeedReviewCreate(Integer reviewId, Integer userId) {
-        String sql = "INSERT INTO t011_feeds (t011_user_id, t011_event_type, t011_operation," +
+        String sql = "INSERT INTO t011_feeds (t002_id, t011_event_type, t011_operation," +
                 " t011_entity_id, t011_timestamp) " +
                 "VALUES (?, 'REVIEW', 'ADD', ?,?)";
         jdbcTemplate.update(sql, userId, reviewId, Date.from(Instant.now()));
     }
 
     private void addToFeedReviewDelete(Integer reviewId, Integer userId) {
-        String sqlQuery = "INSERT INTO t011_feeds (t011_user_id, t011_event_type, t011_operation," +
+        String sqlQuery = "INSERT INTO t011_feeds (t002_id, t011_event_type, t011_operation," +
                 " t011_entity_id, t011_timestamp)" +
                 " VALUES (?, 'REVIEW', 'REMOVE', ?,?)";
         jdbcTemplate.update(sqlQuery, userId, reviewId, Date.from(Instant.now()));

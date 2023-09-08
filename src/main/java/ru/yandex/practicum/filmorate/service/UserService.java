@@ -1,7 +1,7 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
@@ -15,13 +15,9 @@ import java.util.List;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class UserService {
     private final UserStorage userStorage;
-
-    @Autowired
-    public UserService(UserStorage userStorage) {
-        this.userStorage = userStorage;
-    }
 
     public User getUser(Integer id) {
         log.info(String.format("UserService: Поиск пользователя по идентификатору %d", id));
@@ -88,8 +84,9 @@ public class UserService {
 
     public List<Feed> getUserFeed(Integer userId) {
         if (isExist(userId)) {
-            log.info("Новостная лента пользователя: {} {}", userStorage.getUser(userId).getName(), userStorage.getUserFeed(userId));
-            return userStorage.getUserFeed(userId);
+            List<Feed> userFeed = userStorage.getUserFeed(userId);
+            log.info("Новостная лента пользователя {}: {} {}", userId, userStorage.getUser(userId).getName(), userFeed);
+            return userFeed;
         } else {
             throw new NotFoundException("Такого пользователя не существует.");
         }

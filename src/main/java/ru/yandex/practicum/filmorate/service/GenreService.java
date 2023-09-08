@@ -1,7 +1,7 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -11,13 +11,9 @@ import java.util.List;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class GenreService {
-
     private final GenreStorage genreStorage;
-
-    public GenreService(@Qualifier("DbGenreStorage") GenreStorage genreStorage) {
-        this.genreStorage = genreStorage;
-    }
 
     public Genre getGenreById(Integer id) {
         log.info(String.format("GenreService: Поиск жанра по идентификатору %d", id));
