@@ -2,8 +2,8 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.platform.commons.util.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -49,26 +49,18 @@ public class FilmService {
         if (!directorStorage.exists(id)) {
             throw new NotFoundException(String.format("Режиссер с id %s не найден", id));
         }
-        List<Film> allFilms = filmStorage.getAll();
+        List<Film> allFilms = filmStorage.getAllByDirId(id);
         switch (by) {
-
             case likes:
                 return allFilms.stream()
-                        .filter(p1 -> !p1.getDirectors().isEmpty() && p1.getDirectors().get(0).getId() == id)
                         .sorted(Comparator.comparing(Film::getLikesCount))
                         .collect(Collectors.toList());
-
-
             case year:
                 return allFilms.stream()
-                        .filter(p1 -> !p1.getDirectors().isEmpty() && p1.getDirectors().get(0).getId() == id)
                         .sorted(Comparator.comparing(Film::getReleaseDate))
                         .collect(Collectors.toList());
-
-
             default:
                 return new ArrayList<>();
-
         }
     }
 
@@ -120,7 +112,7 @@ public class FilmService {
     }
 
     public void validateFilm(Film film) {
-        if (!StringUtils.hasText(film.getName())) {
+        if (StringUtils.isBlank(film.getName())) {
             String emptyNameMessage = "Название не должно быть пустым!";
             log.error(emptyNameMessage);
             throw new ValidationException(emptyNameMessage);
@@ -145,96 +137,34 @@ public class FilmService {
     }
 
     private List<User> getUsersMaxIntersectionByLikes(Integer id) {
-
-        Set<Integer> userLikes = filmStorage.getAllUserLikesById(id);
-
-        List<User> allUsers = userStorage.getAll();
-
-        List<User> usersForReturn = new ArrayList<>();
-
-        int maxIntersection = 0;
-
-        for (User other : allUsers) {
-
-            userLikes.retainAll(filmStorage.getAllUserLikesById(other.getId()));
-
-            if (userLikes.size() > maxIntersection) {
-
-                maxIntersection = userLikes.size();
-
-                usersForReturn.clear();
-                usersForReturn.add(other);
-
-            } else if (userLikes.size() == maxIntersection) {
-                usersForReturn.add(other);
-            }
-
-        }
-        return usersForReturn;
+        return userStorage.getMaxIntersectionUsers(id);
     }
 
     private Set<Integer> getDifference(User user1, User user2) {
-
         Set<Integer> difForRet = filmStorage.getAllUserLikesById(user2.getId());
         difForRet.removeAll(filmStorage.getAllUserLikesById(user1.getId()));
-
         return difForRet;
     }
 
-    public List<Film> getRecommendFilms(Integer idOfUser) {
-
-        User user = userStorage.get(idOfUser);
+    public List<Film> getRecommendFilms(Integer userId) {
+        User user = userStorage.get(userId);
         if (user != null) {
-
             Set<Integer> idOfReturnFilms = new HashSet<>();
-
             List<User> intersectionByLikeUsers = getUsersMaxIntersectionByLikes(user.getId());
-
-
             for (User u : intersectionByLikeUsers) {
                 idOfReturnFilms.addAll(getDifference(user, u));
             }
-            List<Film> allFilms = filmStorage.getAll();
-            List<Film> filmsForRet = new ArrayList<>();
-
-            for (Film f : allFilms) {
-                if (idOfReturnFilms.contains(f.getId())) {
-                    filmsForRet.add(f);
-                }
-            }
-            return filmsForRet;
+            return filmStorage.getAllByFilmIds(idOfReturnFilms);
         }
         return new ArrayList<>();
     }
 
     public List<Film> searchFilm(String query, String by) {
-
-        List<Film> allFilms = filmStorage.getAll();
-
-        List<Film> forRet = new ArrayList<>();
-
-        if (by.contains("title") && !by.contains("director")) {
-
-            forRet = allFilms.stream()
-                    .filter(p1 -> p1.getName().toLowerCase().contains(query.toLowerCase()))
-                    .sorted(Comparator.comparing(Film::getLikesCount).reversed())
-                    .collect(Collectors.toList());
-
-        } else if (!by.contains("title") && by.contains("director")) {
-
-            forRet = allFilms.stream()
-                    .filter(p1 -> !p1.getDirectors().isEmpty() && p1.getDirectors().get(0).getName()
-                            .toLowerCase().contains(query.toLowerCase()))
-                    .sorted(Comparator.comparing(Film::getLikesCount).reversed())
-                    .collect(Collectors.toList());
-
-        } else if (by.contains("title") && by.contains("director")) {
-
-            forRet = allFilms.stream()
-                    .filter(f -> (((!f.getDirectors().isEmpty()) && (f.getDirectors().get(0).getName().toLowerCase().contains(query.toLowerCase()))) || f.getName().toLowerCase().contains(query.toLowerCase())))
-                    .sorted(Comparator.comparing(Film::getLikesCount).reversed())
-                    .collect(Collectors.toList());
-        }
-        return forRet;
+        log.info("Поиск по текстовой строке {} в полях {}.", query, by);
+        if (StringUtils.isBlank(query) || StringUtils.isBlank(by) || !(by.contains("title") || by.contains("director")))
+            throw new NotFoundException("Неверные параметры поиска фильма!");
+        return filmStorage.search(query, by)
+                .stream().sorted(Comparator.comparing(Film::getLikesCount).reversed())
+                .collect(Collectors.toList());
     }
 }

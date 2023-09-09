@@ -55,6 +55,75 @@ public class DbFilmStorage implements FilmStorage {
     }
 
     @Override
+    public List<Film> getAllByFilmIds(Collection<Integer> ids) {
+        jdbcTemplate.execute("CREATE TEMPORARY TABLE IF NOT EXISTS films_tmp (id INT NOT NULL)");
+        List<Object[]> objFilmIds = new ArrayList<>();
+        for (Integer id : ids) {
+            objFilmIds.add(new Object[]{id});
+        }
+        jdbcTemplate.batchUpdate("INSERT INTO films_tmp VALUES(?)", objFilmIds);
+        String query = "SELECT * FROM t001_films t001 LEFT JOIN t006_ratings t006 ON t006.t006_id = t001.t006_id" +
+                " LEFT JOIN t008_directors t008 ON t008.t008_id = T001.T008_ID" +
+                " WHERE t001.t001_id IN (SELECT id FROM films_tmp)";
+        List<Film> resultList = jdbcTemplate.query(query, (rs, rowNum) -> mapRecordToFilm(rs));
+        jdbcTemplate.update("DELETE FROM films_tmp");
+        if (resultList.isEmpty())
+            return resultList;
+        Map<Integer, List<Genre>> mapGenresToFilms = genreStorage.getMapOfGenresToFilmsByFilmIds(ids);
+        List<Like> likeList = getAllLikesByFilmIds(ids);
+        for (Film film : resultList) {
+            List<Genre> genreList = mapGenresToFilms.get(film.getId());
+            film.setGenres(genreList != null ? genreList : new ArrayList<>());
+            film.setLikes(likeList.stream().filter(x -> film.getId().equals(x.getFilmId())).map(Like::getUserId).collect(Collectors.toSet()));
+        }
+        return resultList;
+    }
+
+    @Override
+    public List<Film> getAllByDirId(Integer dirId) {
+        String query = "SELECT * FROM t001_films t001 LEFT JOIN t006_ratings t006 ON t006.t006_id = t001.t006_id " +
+                "LEFT JOIN t008_directors t008 ON t008.t008_id = T001.T008_ID " +
+                "WHERE T001.T008_ID = ?";
+        List<Film> resultList = jdbcTemplate.query(query, (rs, rowNum) -> mapRecordToFilm(rs), dirId);
+        Map<Integer, List<Genre>> mapGenresToFilms = genreStorage.getMapOfGenresToFilmsByDirId(dirId);
+        List<Like> likeList = getAllLikesByDirId(dirId);
+        for (Film film : resultList) {
+            List<Genre> genreList = mapGenresToFilms.get(film.getId());
+            film.setGenres(genreList != null ? genreList : new ArrayList<>());
+            film.setLikes(likeList.stream().filter(x -> film.getId().equals(x.getFilmId())).map(Like::getUserId).collect(Collectors.toSet()));
+        }
+        return resultList;
+    }
+
+    @Override
+    public List<Film> search(String query, String by) {
+        List<Film> resultList = new ArrayList<>();
+        String sqlQuery = "SELECT * FROM t001_films t001 LEFT JOIN t006_ratings t006 ON t006.t006_id = t001.t006_id " +
+                "LEFT JOIN t008_directors t008 ON t008.t008_id = T001.T008_ID";
+        if (by.contains("director") && by.contains("title")) {
+            sqlQuery = sqlQuery + " WHERE lower(t008.t008_name) like ('%' || ? || '%') OR lower(t001.t001_name) like ('%' || ? || '%')";
+            resultList = jdbcTemplate.query(sqlQuery, (rs, rowNum) -> mapRecordToFilm(rs), query.toLowerCase(), query.toLowerCase());
+        } else if (by.contains("director")) {
+            sqlQuery = sqlQuery + " WHERE lower(t008.t008_name) like ('%' || ? || '%')";
+            resultList = jdbcTemplate.query(sqlQuery, (rs, rowNum) -> mapRecordToFilm(rs), query.toLowerCase());
+        } else if (by.contains("title")) {
+            sqlQuery = sqlQuery + " WHERE lower(t001.t001_name) like ('%' || ? || '%')";
+            resultList = jdbcTemplate.query(sqlQuery, (rs, rowNum) -> mapRecordToFilm(rs), query.toLowerCase());
+        }
+        if (resultList.isEmpty())
+            return resultList;
+        List<Integer> filmIds = resultList.stream().map(Film::getId).collect(Collectors.toList());
+        Map<Integer, List<Genre>> mapGenresToFilms = genreStorage.getMapOfGenresToFilmsByFilmIds(filmIds);
+        List<Like> likeList = getAllLikesByFilmIds(filmIds);
+        for (Film film : resultList) {
+            List<Genre> genreList = mapGenresToFilms.get(film.getId());
+            film.setGenres(genreList != null ? genreList : new ArrayList<>());
+            film.setLikes(likeList.stream().filter(x -> film.getId().equals(x.getFilmId())).map(Like::getUserId).collect(Collectors.toSet()));
+        }
+        return resultList;
+    }
+
+    @Override
     public Film add(Film film) {
         String sqlQueryT001 = "INSERT INTO t001_films (t001_name, t001_description, t001_release_date, t001_duration, t006_id, t008_id) VALUES (?, ?, ?, ?, ?, ?)";
         String sqlQueryT007 = "INSERT INTO t007_links_t001_t005 (t001_id, t005_id) VALUES (?, ?)";
@@ -155,8 +224,9 @@ public class DbFilmStorage implements FilmStorage {
 
         NamedParameterJdbcTemplate namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
         List<Film> resultList = namedParameterJdbcTemplate.query(sqlQuery, paramSource, (rs, rowNum) -> mapRecordToFilm(rs));
-        Map<Integer, List<Genre>> mapGenresToFilms = genreStorage.getMapOfGenresToFilms();
-        List<Like> likeList = getAllLikes();
+        List<Integer> filmIds = resultList.stream().map(Film::getId).collect(Collectors.toList());
+        Map<Integer, List<Genre>> mapGenresToFilms = genreStorage.getMapOfGenresToFilmsByFilmIds(filmIds);
+        List<Like> likeList = getAllLikesByFilmIds(filmIds);
         for (Film film : resultList) {
             List<Genre> genreList = mapGenresToFilms.get(film.getId());
             film.setGenres(genreList != null ? genreList : new ArrayList<>());
@@ -295,6 +365,28 @@ public class DbFilmStorage implements FilmStorage {
     private List<Like> getAllLikes() {
         String sqlQueryT003 = "SELECT * FROM t003_likes";
         return jdbcTemplate.query(sqlQueryT003, (rs, rowNum) -> mapRecordToLike(rs));
+    }
+
+    private List<Like> getAllLikesByDirId(Integer dirId) {
+        String sqlQueryT003 = "SELECT * FROM t003_likes t003" +
+                " JOIN t001_films t001 on t001.t001_id = t003.t001_id" +
+                " WHERE t001.t008_id = ?";
+        return jdbcTemplate.query(sqlQueryT003, (rs, rowNum) -> mapRecordToLike(rs), dirId);
+    }
+
+    private List<Like> getAllLikesByFilmIds(Collection<Integer> filmIds) {
+        jdbcTemplate.execute("CREATE TEMPORARY TABLE IF NOT EXISTS films_tmp (id INT NOT NULL)");
+        List<Object[]> objFilmIds = new ArrayList<>();
+        for (Integer id : filmIds) {
+            objFilmIds.add(new Object[]{id});
+        }
+        jdbcTemplate.batchUpdate("INSERT INTO films_tmp VALUES(?)", objFilmIds);
+        String sqlQueryT003 = "SELECT * FROM t003_likes t003" +
+                " JOIN t001_films t001 on t001.t001_id = t003.t001_id" +
+                " WHERE t001.t001_id IN (SELECT id FROM films_tmp)";
+        List<Like> resultList = jdbcTemplate.query(sqlQueryT003, (rs, rowNum) -> mapRecordToLike(rs));
+        jdbcTemplate.update("DELETE FROM films_tmp");
+        return resultList;
     }
 
     private void addToFeedAddLike(Integer userId, Integer filmId) {

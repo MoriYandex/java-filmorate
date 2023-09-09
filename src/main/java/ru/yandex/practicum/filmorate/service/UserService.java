@@ -66,7 +66,7 @@ public class UserService {
     }
 
     public List<User> getAllFriends(Integer id) {
-        if (isExist(id)) {
+        if (exists(id)) {
             log.info("Получение списка друзей пользователя {}", id);
             return userStorage.getAllFriends(id);
         } else {
@@ -83,7 +83,7 @@ public class UserService {
     }
 
     public List<Feed> getFeedsByUserId(Integer userId) {
-        if (isExist(userId)) {
+        if (exists(userId)) {
             List<Feed> userFeed = userStorage.getFeedsByUserId(userId);
             log.info("Новостная лента пользователя {}: {} {}", userId, userStorage.get(userId).getName(), userFeed);
             return userFeed;
@@ -122,12 +122,7 @@ public class UserService {
             user.setName(user.getLogin());
     }
 
-    private boolean isExist(int id) {
-        for (User user : userStorage.getAll()) {
-            if (id == user.getId()) {
-                return true;
-            }
-        }
-        return false;
+    private Boolean exists(int id) {
+        return userStorage.exists(id);
     }
 }

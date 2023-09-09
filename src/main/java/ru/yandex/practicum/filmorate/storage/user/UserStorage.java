@@ -6,6 +6,8 @@ import ru.yandex.practicum.filmorate.model.Feed;
 import java.util.List;
 
 public interface UserStorage {
+    Boolean exists(Integer id);
+
     User get(Integer id);
 
     List<User> getAll();
@@ -25,4 +27,6 @@ public interface UserStorage {
     List<User> getCommonFriends(Integer id, Integer otherId);
 
     List<Feed> getFeedsByUserId(Integer id);
+
+    List<User> getMaxIntersectionUsers(Integer id);
 }
