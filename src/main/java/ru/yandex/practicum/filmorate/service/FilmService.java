@@ -17,10 +17,8 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.Set;
 
 @Service
 @Slf4j
@@ -136,27 +134,8 @@ public class FilmService {
         }
     }
 
-    private List<User> getUsersMaxIntersectionByLikes(Integer id) {
-        return userStorage.getMaxIntersectionUsers(id);
-    }
-
-    private Set<Integer> getDifference(User user1, User user2) {
-        Set<Integer> difForRet = filmStorage.getAllUserLikesById(user2.getId());
-        difForRet.removeAll(filmStorage.getAllUserLikesById(user1.getId()));
-        return difForRet;
-    }
-
     public List<Film> getRecommendFilms(Integer userId) {
-        User user = userStorage.get(userId);
-        if (user != null) {
-            Set<Integer> idOfReturnFilms = new HashSet<>();
-            List<User> intersectionByLikeUsers = getUsersMaxIntersectionByLikes(user.getId());
-            for (User u : intersectionByLikeUsers) {
-                idOfReturnFilms.addAll(getDifference(user, u));
-            }
-            return filmStorage.getAllByFilmIds(idOfReturnFilms);
-        }
-        return new ArrayList<>();
+        return filmStorage.getRecommendFilms(userId);
     }
 
     public List<Film> searchFilm(String query, String by) {

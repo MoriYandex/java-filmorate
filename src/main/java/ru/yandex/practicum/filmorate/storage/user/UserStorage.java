@@ -28,5 +28,4 @@ public interface UserStorage {
 
     List<Feed> getFeedsByUserId(Integer id);
 
-    List<User> getMaxIntersectionUsers(Integer id);
 }

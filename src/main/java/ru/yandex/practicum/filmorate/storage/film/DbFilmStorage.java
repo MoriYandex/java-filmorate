@@ -55,31 +55,6 @@ public class DbFilmStorage implements FilmStorage {
     }
 
     @Override
-    public List<Film> getAllByFilmIds(Collection<Integer> ids) {
-        jdbcTemplate.execute("CREATE TEMPORARY TABLE IF NOT EXISTS films_tmp (id INT NOT NULL)");
-        List<Object[]> objFilmIds = new ArrayList<>();
-        for (Integer id : ids) {
-            objFilmIds.add(new Object[]{id});
-        }
-        jdbcTemplate.batchUpdate("INSERT INTO films_tmp VALUES(?)", objFilmIds);
-        String query = "SELECT * FROM t001_films t001 LEFT JOIN t006_ratings t006 ON t006.t006_id = t001.t006_id" +
-                " LEFT JOIN t008_directors t008 ON t008.t008_id = T001.T008_ID" +
-                " WHERE t001.t001_id IN (SELECT id FROM films_tmp)";
-        List<Film> resultList = jdbcTemplate.query(query, (rs, rowNum) -> mapRecordToFilm(rs));
-        jdbcTemplate.update("DELETE FROM films_tmp");
-        if (resultList.isEmpty())
-            return resultList;
-        Map<Integer, List<Genre>> mapGenresToFilms = genreStorage.getMapOfGenresToFilmsByFilmIds(ids);
-        List<Like> likeList = getAllLikesByFilmIds(ids);
-        for (Film film : resultList) {
-            List<Genre> genreList = mapGenresToFilms.get(film.getId());
-            film.setGenres(genreList != null ? genreList : new ArrayList<>());
-            film.setLikes(likeList.stream().filter(x -> film.getId().equals(x.getFilmId())).map(Like::getUserId).collect(Collectors.toSet()));
-        }
-        return resultList;
-    }
-
-    @Override
     public List<Film> getAllByDirId(Integer dirId) {
         String query = "SELECT * FROM t001_films t001 LEFT JOIN t006_ratings t006 ON t006.t006_id = t001.t006_id " +
                 "LEFT JOIN t008_directors t008 ON t008.t008_id = T001.T008_ID " +
@@ -404,9 +379,30 @@ public class DbFilmStorage implements FilmStorage {
     }
 
     @Override
-    public Set<Integer> getAllUserLikesById(Integer id) {
-        String sqlQueryT003 = "SELECT t001_id FROM t003_likes WHERE t002_id = ?";
-        List<Integer> resultList = jdbcTemplate.query(sqlQueryT003, (rs, rowNum) -> rs.getInt("t001_id"), id);
-        return new HashSet<>(resultList);
+    public List<Film> getRecommendFilms(Integer userId) {
+        String sqlQuery = "WITH intersections as (SELECT t002_id as t002_id, count (t001_id) as intercount" +
+                "                                   FROM t003_likes" +
+                "                                   WHERE t001_id in (SELECT t001_id FROM t003_likes WHERE t002_id = ? )" +
+                "                                       AND t002_id <> ?  " +
+                "                                       GROUP BY t002_id)" +
+                " SELECT * FROM t001_films t001 LEFT JOIN t006_ratings t006 ON t006.t006_id = t001.t006_id " +
+                "   LEFT JOIN t008_directors t008 ON t008.t008_id = T001.T008_ID" +
+                " WHERE t001.t001_id IN (SELECT  DISTINCT t003.t001_id as t001_id" +
+                "                FROM t003_likes t003" +
+                "                JOIN intersections i ON i.t002_id = t003.t002_id" +
+                "                WHERE i.intercount = (SELECT MAX(intercount) FROM intersections)" +
+                "                AND NOT (t003.t001_id IN (SELECT t001_id FROM (SELECT t001_id FROM t003_likes WHERE t002_id = ? ))))";
+        List<Film> resultList = jdbcTemplate.query(sqlQuery, (rs, rowNum) -> mapRecordToFilm(rs), userId, userId, userId);
+        if (resultList.isEmpty())
+            return resultList;
+        List<Integer> filmIds = resultList.stream().map(Film::getId).collect(Collectors.toList());
+        Map<Integer, List<Genre>> mapGenresToFilms = genreStorage.getMapOfGenresToFilmsByFilmIds(filmIds);
+        List<Like> likeList = getAllLikesByFilmIds(filmIds);
+        for (Film film : resultList) {
+            List<Genre> genreList = mapGenresToFilms.get(film.getId());
+            film.setGenres(genreList != null ? genreList : new ArrayList<>());
+            film.setLikes(likeList.stream().filter(x -> film.getId().equals(x.getFilmId())).map(Like::getUserId).collect(Collectors.toSet()));
+        }
+        return resultList;
     }
 }

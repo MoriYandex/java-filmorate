@@ -169,19 +169,6 @@ public class DbUserStorage implements UserStorage {
         return jdbcTemplate.query(sqlQuery, this::makeFeed, id);
     }
 
-    @Override
-    public List<User> getMaxIntersectionUsers(Integer id) {
-        String sqlQuery = "WITH intersections as (SELECT t002_id, count (t001_id) as intercount" +
-                " FROM t003_likes" +
-                " WHERE t001_id in (SELECT t001_id FROM t003_likes WHERE t002_id = ? )" +
-                " AND t002_id <> ?  " +
-                " GROUP BY t002_id)" +
-                " SELECT t002.* FROM t002_users t002" +
-                " JOIN intersections i on i.t002_id = t002.t002_id" +
-                " WHERE i.intercount = (select max(intercount) from intersections)";
-        return jdbcTemplate.query(sqlQuery, (rs, rowNum) -> mapRecordToUser(rs), id, id);
-    }
-
     private User mapRecordToUser(ResultSet rs) {
         try {
             Integer id = rs.getInt("t002_id");
