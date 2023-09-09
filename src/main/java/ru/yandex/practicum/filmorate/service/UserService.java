@@ -20,7 +20,7 @@ public class UserService {
     private final UserStorage userStorage;
 
     public User getUser(Integer id) {
-        log.info(String.format("UserService: Поиск пользователя по идентификатору %d", id));
+        log.info("Поиск пользователя по идентификатору {}", id);
         User user = userStorage.get(id);
         if (user == null)
             throw new NotFoundException(String.format("Пользователь %d не найден!", id));
@@ -28,29 +28,29 @@ public class UserService {
     }
 
     public List<User> getAllUsers() {
-        log.info("UserService: Получение списка всех пользователей");
+        log.info("Получение списка всех пользователей");
         return userStorage.getAll();
     }
 
     public User addUser(User user) {
-        log.info("UserService: Добавление пользователя");
+        log.info("Добавление пользователя");
         validateUser(user);
         return userStorage.add(user);
     }
 
     public User updateUser(User user) {
-        log.info(String.format("UserService: Изменение данных пользователя по идентификатору %d", user.getId()));
+        log.info("Изменение данных пользователя по идентификатору {}", user.getId());
         validateUser(user);
         return userStorage.update(user);
     }
 
     public User deleteUser(Integer id) {
-        log.info("UserService: Удаление пользователя");
+        log.info("Удаление пользователя");
         return userStorage.delete(id);
     }
 
     public User addFriend(Integer id, Integer friendId) {
-        log.info(String.format("UserService: Добавление пользователем %d друга %d", id, friendId));
+        log.info("Добавление пользователем {} друга {}", id, friendId);
         if (id < 0 || friendId < 0) {
             throw new NotFoundException("Идентификаторы не могут быть отрицательными.");
         }
@@ -58,7 +58,7 @@ public class UserService {
     }
 
     public User deleteFriend(Integer id, Integer friendId) {
-        log.info(String.format("UserService: Удаление пользователем %d друга %d", id, friendId));
+        log.info("Удаление пользователем {} друга {}", id, friendId);
         if (id < 0 || friendId < 0) {
             throw new ValidationException("Идентификаторы не могут быть отрицательными.");
         }
@@ -67,7 +67,7 @@ public class UserService {
 
     public List<User> getAllFriends(Integer id) {
         if (isExist(id)) {
-            log.info(String.format("UserService: Получение списка друзей пользователя %d", id));
+            log.info("Получение списка друзей пользователя {}", id);
             return userStorage.getAllFriends(id);
         } else {
             throw new NotFoundException(String.format("Пользователя с id %d не существует.", id));
@@ -78,7 +78,7 @@ public class UserService {
         if (id < 0 || otherId < 0) {
             throw new ValidationException("Идентификаторы не могут быть отрицательными.");
         }
-        log.info(String.format("UserService: Получение списка друзей пользователя %d, общих с пользователем %d", id, otherId));
+        log.info("Получение списка друзей пользователя {}, общих с пользователем {}", id, otherId);
         return userStorage.getCommonFriends(id, otherId);
     }
 

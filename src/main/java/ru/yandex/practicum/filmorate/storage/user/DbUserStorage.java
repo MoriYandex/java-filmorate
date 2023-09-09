@@ -80,7 +80,7 @@ public class DbUserStorage implements UserStorage {
                 user.getName(),
                 user.getBirthday(),
                 user.getId());
-        log.info(String.format("Пользователь %d успешно изменён.", user.getId()));
+        log.info("Пользователь {} успешно изменён.", user.getId());
         return user;
     }
 

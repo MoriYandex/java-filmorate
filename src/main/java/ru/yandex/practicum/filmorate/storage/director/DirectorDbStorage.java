@@ -32,7 +32,7 @@ public class DirectorDbStorage implements DirectorStorage {
             return statement;
         }, keyHolder);
         director.setId(Objects.requireNonNull(keyHolder.getKey()).intValue());
-        log.info(String.format("Добавлен режиссёр %s.", director));
+        log.info("Добавлен режиссёр {}", director);
         return director;
     }
 
@@ -41,10 +41,10 @@ public class DirectorDbStorage implements DirectorStorage {
         if (exists(director.getId())) {
             String updateDirector = "UPDATE t008_directors SET t008_name = ? WHERE t008_id = ?";
             jdbcTemplate.update(updateDirector, director.getName(), director.getId());
-            log.info(String.format("Режиссёр %s обновлён.", director));
+            log.info("Режиссёр {} обновлён.", director);
             return director;
         } else {
-            log.warn(String.format("Режиссёр с id %d не найден.", director.getId()));
+            log.warn("Режиссёр с id {} не найден.", director.getId());
             throw new NotFoundException(String.format("Режиссёр с id %d не найден", director.getId()));
         }
     }
@@ -54,9 +54,9 @@ public class DirectorDbStorage implements DirectorStorage {
         if (exists(id)) {
             String deleteDirector = "DELETE FROM t008_directors WHERE t008_id = ?";
             jdbcTemplate.update(deleteDirector, id);
-            log.info(String.format("Режиссёр с id %d удалён.", id));
+            log.info("Режиссёр с id {} удалён.", id);
         } else {
-            log.warn(String.format("Режиссёр с id %d не найден.", id));
+            log.warn("Режиссёр с id {} не найден.", id);
             throw new NotFoundException(String.format("Режиссёр с id %d не найден", id));
         }
     }

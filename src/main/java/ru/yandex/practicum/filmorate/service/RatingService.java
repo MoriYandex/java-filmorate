@@ -16,7 +16,7 @@ public class RatingService {
     private final RatingStorage ratingStorage;
 
     public Rating getRating(Integer id) {
-        log.info(String.format("RatingService: Поиск рейтинга по идентификатору %d", id));
+        log.info("Поиск рейтинга по идентификатору {}", id);
         Rating rating = ratingStorage.getRating(id);
         if (rating == null)
             throw new NotFoundException(String.format("Рейтинг %d не найден!", id));
@@ -24,7 +24,7 @@ public class RatingService {
     }
 
     public List<Rating> getAllRatings() {
-        log.info("RatingService: Получение списка всех рейтингов");
+        log.info("Получение списка всех рейтингов");
         return ratingStorage.getAllRatings();
     }
 }

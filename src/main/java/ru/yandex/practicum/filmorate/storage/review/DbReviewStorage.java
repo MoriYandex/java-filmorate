@@ -61,7 +61,7 @@ public class DbReviewStorage implements ReviewStorage {
                 review.getReviewId()
         );
 
-        log.info(String.format("Отзыв %d успешно изменён.", review.getReviewId()));
+        log.info("Отзыв {} успешно изменён.", review.getReviewId());
         addToFeedReviewUpdate(review.getReviewId());
         return get(review.getReviewId());
     }
@@ -203,7 +203,7 @@ public class DbReviewStorage implements ReviewStorage {
         String sqlQuery010 = "INSERT INTO t010_review_feedbacks (t009_id, t002_id, t010_value) VALUES (?, ?, ?)";
         jdbcTemplate.update(sqlQuery010, review.getReviewId(), userId, value);
         review.setUseful(review.getUseful() + value);
-        log.info(String.format("Добавлена оценка отзыву %d пользователем %d.", review.getReviewId(), userId));
+        log.info("Добавлена оценка отзыву {} пользователем {}.", review.getReviewId(), userId);
     }
 
     private void addIfLikeDislikeAlreadyExist(Review review, Integer userId, Integer value, SqlRowSet rowSetUser) {
@@ -213,7 +213,7 @@ public class DbReviewStorage implements ReviewStorage {
             String sqlQuery010 = "UPDATE t010_review_feedbacks SET t010_value = ? WHERE t009_id = ? AND t002_id = ?";
             jdbcTemplate.update(sqlQuery010, -value, review.getReviewId(), userId);
             review.setUseful(review.getUseful() + (-value * 2));
-            log.info(String.format("Пользователь %d изменил оценку отзыва %d на лайк.", userId, review.getReviewId()));
+            log.info("Пользователь {} изменил оценку отзыва {} на лайк.", userId, review.getReviewId());
         }
     }
 
@@ -225,7 +225,7 @@ public class DbReviewStorage implements ReviewStorage {
         String sqlQuery010 = "DELETE FROM t010_review_feedbacks WHERE t009_id = ? AND t002_id = ?";
         jdbcTemplate.update(sqlQuery010, id, userId);
         review.setUseful(review.getUseful() - value);
-        log.info(String.format("Удален лайк/дизлайк отзыву %d пользователем %d.", id, userId));
+        log.info("Удален лайк/дизлайк отзыву {} пользователем {}.", id, userId);
     }
 
     private void addToFeedReviewUpdate(Integer reviewId) {

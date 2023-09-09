@@ -33,7 +33,7 @@ public class FilmService {
     private final DirectorStorage directorStorage;
 
     public Film getFilmById(Integer id) {
-        log.info(String.format("FilmService: Поиск фильма по идентификатору %d", id));
+        log.info("Поиск фильма по идентификатору {}", id);
         Film film = filmStorage.get(id);
         if (film == null)
             throw new NotFoundException(String.format("Фильм %d не найден!", id));
@@ -41,7 +41,7 @@ public class FilmService {
     }
 
     public List<Film> getAllFilms() {
-        log.info("FilmService: Получение списка всех фильмов");
+        log.info("Получение списка всех фильмов");
         return filmStorage.getAll();
     }
 
@@ -73,24 +73,24 @@ public class FilmService {
     }
 
     public Film addFilm(Film film) {
-        log.info("FilmService: Добавление фильма");
+        log.info("Добавление фильма");
         validateFilm(film);
         return filmStorage.add(film);
     }
 
     public Film updateFilm(Film film) {
-        log.info(String.format("FilmService: Изменение данных фильма по идентификатору %d", film.getId()));
+        log.info("Изменение данных фильма по идентификатору {}", film.getId());
         validateFilm(film);
         return filmStorage.update(film);
     }
 
     public Film deleteFilm(Integer id) {
-        log.info("FilmService: Удаление фильма");
+        log.info("Удаление фильма {}", id);
         return filmStorage.delete(id);
     }
 
     public Film addLike(Integer id, Integer userId) {
-        log.info(String.format("FilmService: Добавление лайка фильму %d пользователем %d", id, userId));
+        log.info("Добавление лайка фильму {} пользователем {}", id, userId);
         User user = userStorage.get(userId);
         if (user == null)
             throw new NotFoundException(String.format("Пользователь %d не найден!", userId));
@@ -101,7 +101,7 @@ public class FilmService {
         if (id < 0 || userId < 0) {
             throw new NotFoundException("Пользователь не может быть с отрицательным id.");
         }
-        log.info(String.format("FilmService: Удаление лайка фильму %d пользователем %d", id, userId));
+        log.info("Удаление лайка фильму {} пользователем {}", id, userId);
         User user = userStorage.get(userId);
         if (user == null)
             throw new NotFoundException(String.format("Пользователь %d не найден!", id));
@@ -110,12 +110,12 @@ public class FilmService {
 
     public List<Film> getMostPopular(Integer count, Integer genreId, Integer year) {
         int filmCount = (count != null && count > 0) ? count : MOST_POPULAR_QUANTITY;
-        log.info(String.format("FilmService: Вывод %d наиболее популярных фильмов", filmCount));
+        log.info("Вывод {} наиболее популярных фильмов", filmCount);
         return filmStorage.getMostPopular(filmCount, genreId, year);
     }
 
     public List<Film> getCommonFilms(Integer userId, Integer friendId) {
-        log.info(String.format("FilmService: Вывод общих фильмов пользователей %d и %d", userId, friendId));
+        log.info("Вывод общих фильмов пользователей {} и {}", userId, friendId);
         return filmStorage.getCommonFilms(userId, friendId);
     }
 

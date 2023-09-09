@@ -112,7 +112,7 @@ public class DbFilmStorage implements FilmStorage {
         String sqlQuery003 = "INSERT INTO t003_likes (t001_id, t002_id) VALUES (?, ?)";
         jdbcTemplate.update(sqlQuery003, id, userId);
         film.getLikes().add(userId);
-        log.info(String.format("Добавлен лайк фильму %d пользователем %d.", id, userId));
+        log.info("Добавлен лайк фильму {} пользователем {}.", id, userId);
         return film;
     }
 
@@ -127,7 +127,7 @@ public class DbFilmStorage implements FilmStorage {
         String sqlQuery003 = "DELETE FROM t003_likes WHERE t001_id = ? AND t002_id = ?";
         jdbcTemplate.update(sqlQuery003, id, userId);
         film.getLikes().remove(userId);
-        log.info(String.format("Удалён лайк фильму %d пользователем %d.", id, userId));
+        log.info("Удалён лайк фильму {} пользователем {}.", id, userId);
         return film;
     }
 

@@ -16,7 +16,7 @@ public class GenreService {
     private final GenreStorage genreStorage;
 
     public Genre getGenre(Integer id) {
-        log.info(String.format("GenreService: Поиск жанра по идентификатору %d", id));
+        log.info("Поиск жанра по идентификатору {}", id);
         Genre genre = genreStorage.get(id);
         if (genre == null)
             throw new NotFoundException(String.format("Жанр %d не найден!", id));
@@ -24,7 +24,7 @@ public class GenreService {
     }
 
     public List<Genre> getAllGenres() {
-        log.info("GenreService: Получение списка всех жанров");
+        log.info("Получение списка всех жанров");
         return genreStorage.getAll();
     }
 }
