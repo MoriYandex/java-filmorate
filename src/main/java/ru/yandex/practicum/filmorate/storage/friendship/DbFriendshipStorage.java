@@ -25,14 +25,14 @@ public class DbFriendshipStorage implements FriendshipStorage {
     private final JdbcTemplate jdbcTemplate;
 
     @Override
-    public Friendship getFriendship(Integer targetId, Integer friendId) {
+    public Friendship get(Integer targetId, Integer friendId) {
         String sqlQueryT004 = "SELECT * FROM t004_friends t004 WHERE t002_target_id = ? AND t002_friend_id = ?";
         List<Friendship> resultList = jdbcTemplate.query(sqlQueryT004, (rs, rowNum) -> mapRecordToFriendship(rs), targetId, friendId);
         return resultList.stream().findFirst().orElse(null);
     }
 
     @Override
-    public List<Integer> getFriendIdsByUserId(Integer targetId) {
+    public List<Integer> getFriendsIdsByUserId(Integer targetId) {
         String sqlQueryT004 = "SELECT * FROM t004_friends t004 WHERE t002_target_id = ? OR (t002_friend_id = ? AND t004_confirmed = true)";
         List<Friendship> resultFriends = jdbcTemplate.query(sqlQueryT004, (rs, rowNum) -> mapRecordToFriendship(rs), targetId, targetId);
         List<Integer> resultList = new ArrayList<>();
@@ -46,14 +46,14 @@ public class DbFriendshipStorage implements FriendshipStorage {
     }
 
     @Override
-    public List<Integer> getCommonFriendIds(Integer targetId, Integer otherId) {
-        List<Integer> targetList = getFriendIdsByUserId(targetId);
-        List<Integer> otherListIds = getFriendIdsByUserId(otherId);
+    public List<Integer> getCommonFriendsIds(Integer targetId, Integer otherId) {
+        List<Integer> targetList = getFriendsIdsByUserId(targetId);
+        List<Integer> otherListIds = getFriendsIdsByUserId(otherId);
         return targetList.stream().filter(otherListIds::contains).collect(Collectors.toList());
     }
 
     @Override
-    public Friendship addFriendship(Friendship friendship) {
+    public Friendship add(Friendship friendship) {
         String sqlQueryT004 = "INSERT INTO t004_friends (t002_target_id, t002_friend_id, t004_confirmed) VALUES (?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
@@ -68,14 +68,14 @@ public class DbFriendshipStorage implements FriendshipStorage {
     }
 
     @Override
-    public Friendship updateFriendship(Friendship friendship) {
+    public Friendship update(Friendship friendship) {
         String sqlQueryT004 = "UPDATE t004_friends SET t002_target_id = ?, t002_friend_id = ?, t004_confirmed = ? WHERE t004_id = ?";
         jdbcTemplate.update(sqlQueryT004, friendship.getTargetId(), friendship.getFriendId(), friendship.getConfirmed(), friendship.getId());
         return friendship;
     }
 
     @Override
-    public void deleteFriendship(Integer id) {
+    public void delete(Integer id) {
         String sqlQueryT004 = "DELETE FROM t004_friends WHERE t004_id = ?";
         jdbcTemplate.update(sqlQueryT004, id);
     }

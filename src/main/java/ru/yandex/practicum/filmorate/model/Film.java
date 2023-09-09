@@ -1,13 +1,16 @@
 package ru.yandex.practicum.filmorate.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-@Data
+@Getter
+@Setter
+@Builder
 @AllArgsConstructor
 @RequiredArgsConstructor
 public class Film {
@@ -19,8 +22,17 @@ public class Film {
     private List<Genre> genres = new ArrayList<>();
     private Rating mpa = new Rating();
     private Set<Integer> likes = new HashSet<>();
+    private List<Director> directors = new ArrayList<>();
 
     public int getLikesCount() {
         return likes.size();
+    }
+
+    public void addGenre(Genre genre) {
+        genres.add(genre);
+    }
+
+    public void addDirector(Director director) {
+        directors.add(director);
     }
 }

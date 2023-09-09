@@ -17,12 +17,12 @@ public class RatingController {
     private final RatingService ratingService;
 
     @GetMapping("/{id}")
-    public Rating getRating(@PathVariable Integer id) {
-        return ratingService.getRatingById(id);
+    public Rating get(@PathVariable Integer id) {
+        return ratingService.getRating(id);
     }
 
     @GetMapping()
-    public List<Rating> getAllRatings() {
+    public List<Rating> getAll() {
         return ratingService.getAllRatings();
     }
 }
